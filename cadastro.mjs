@@ -18,11 +18,12 @@ export default async (req)=>{
   if(!nome)return json({detail:'Informe o nome completo.'},400);
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))return json({detail:'E-mail inválido.'},400);
   if((b.senha||'').length<8)return json({detail:'A senha deve ter ao menos 8 caracteres.'},400);
-  const ex=await getUser(email);if(ex&&ex.ativo)return json({detail:'Já existe uma conta ativa para este e-mail.'},409);
-  await setUser(email,{nome,crm:(b.crm||'').trim(),senha:hashSenha(b.senha),ativo:false,criado:Date.now()});
-  const link=(E.APP_BASE_URL||E.URL||'')+'/confirmar.html?token='+gerarToken({email,acao:'confirmar'},86400);
-  if(smtpOk())await enviar(email,'Confirme seu e-mail · Delfos EchoFlow','<p>Olá, '+nome+'.</p><p>Confirme seu e-mail:</p><p><a href="'+link+'">Confirmar e-mail</a></p><p>'+link+'</p>');
-  const resp={ok:true,email_enviado:smtpOk(),mensagem:'Enviamos um link de confirmação para o seu e-mail.'};
-  if(!smtpOk())resp.dev_link=link;return json(resp);
+  const ex=await getUser(email);if(ex&&ex.ativo)return json({detail:'Já existe uma conta para este e-mail. Use "Entrar" ou "Recuperar senha".'},409);
+  // Conta ativa imediatamente — o login funciona logo após o cadastro.
+  await setUser(email,{nome,crm:(b.crm||'').trim(),senha:hashSenha(b.senha),ativo:true,criado:Date.now()});
+  // E-mail de boas-vindas/confirmação (não bloqueia o acesso).
+  const link=(E.APP_BASE_URL||E.URL||'')+'/login.html';
+  if(smtpOk()){try{await enviar(email,'Conta criada · Delfos EchoFlow','<p>Olá, '+nome+'.</p><p>Sua conta na Delfos EchoFlow foi criada e já está ativa.</p><p>Acesse: <a href="'+link+'">'+link+'</a></p>');}catch(_){}}
+  return json({ok:true,ativa:true,email_enviado:smtpOk(),mensagem:'Conta criada e ativada. Você já pode entrar.'});
 };
 export const config={path:'/auth/cadastro'};
