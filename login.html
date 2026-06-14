@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delfos EchoFlow · Entrar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--teal:#0f3b46;--teal2:#1c6b7d;--cyan:#1f8a9c;--amber:#e6a23c;--amber2:#f2b85a;--ink:#10242a;--line:#dde6e7;--mut:#62777d;--err:#b3402f;--ok:#2e7d52;
+    --ui:'Inter',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;--serif:'Fraunces',Georgia,serif;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--ui);color:var(--ink);min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;
+    background:radial-gradient(900px 500px at 110% 110%,#e3edee 0,transparent 55%),#eef2f3}
+  /* ---- painel de marca ---- */
+  .brandside{position:relative;overflow:hidden;color:#eef9fa;padding:54px 56px;display:flex;flex-direction:column;justify-content:center;
+    background:radial-gradient(900px 420px at 80% 0,#1b6072 0,transparent 60%),linear-gradient(135deg,#0a2e36,#114a57 55%,#0c3742)}
+  .logo{display:flex;align-items:center;gap:13px;margin-bottom:30px}
+  .mark{width:46px;height:46px;border-radius:12px;background:linear-gradient(150deg,#e6a23c,#d6892a);display:grid;place-items:center;box-shadow:0 6px 18px rgba(214,137,42,.45)}
+  .mark svg{width:30px;height:30px}
+  .logo .nm{font-family:var(--serif);font-size:27px;font-weight:600;line-height:1}
+  .logo .nm small{display:block;font-family:var(--ui);font-size:10.5px;letter-spacing:2.5px;text-transform:uppercase;color:#8fc2cb;font-weight:600;margin-top:3px}
+  .brandside h1{font-family:var(--serif);font-weight:600;font-size:34px;line-height:1.12;margin:0 0 14px;max-width:460px}
+  .brandside h1 span{color:var(--amber2)}
+  .brandside p{color:#bfdde2;font-size:15px;line-height:1.55;max-width:420px;margin:0 0 26px}
+  .feats{display:flex;flex-direction:column;gap:12px}
+  .feat{display:flex;align-items:center;gap:11px;font-size:14px;color:#d8eef1}
+  .feat .d{width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,.1);display:grid;place-items:center;color:var(--amber2);font-weight:700;flex-shrink:0}
+  .orbit{position:absolute;right:-70px;bottom:-70px;width:300px;height:300px;opacity:.35;pointer-events:none}
+  /* ---- formulário ---- */
+  .loginside{display:flex;align-items:center;justify-content:center;padding:40px 28px}
+  .box{width:100%;max-width:392px}
+  .box h2{font-family:var(--serif);font-size:26px;margin:0 0 4px;font-weight:600}
+  .box .sub{color:var(--mut);font-size:14px;margin:0 0 26px}
+  label{font-size:12px;color:var(--mut);font-weight:600;display:block;margin:0 0 6px}
+  .field{margin-bottom:16px}
+  .inp{position:relative}
+  input[type=email],input[type=password],input[type=text]{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:11px;font:inherit;font-size:15px;background:#fcfefe;transition:.15s}
+  input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(31,138,156,.15)}
+  .toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--mut);font-size:13px;font-weight:600;padding:4px 6px}
+  .rowbetween{display:flex;align-items:center;justify-content:space-between;margin:4px 0 20px;font-size:13px}
+  .rowbetween label{display:flex;align-items:center;gap:7px;margin:0;color:var(--ink);font-weight:500;cursor:pointer}
+  .rowbetween a{color:var(--cyan);text-decoration:none;font-weight:600}
+  .rowbetween a:hover{text-decoration:underline}
+  .btn{width:100%;padding:13px;border:none;border-radius:11px;font:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:.16s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn:hover{transform:translateY(-1px)}
+  .btn-primary{background:linear-gradient(180deg,#15525f,#0f3b46);color:#fff;box-shadow:0 5px 16px rgba(15,59,70,.3)}
+  .btn-cert{background:#fff;color:var(--teal);border:1.5px solid var(--line);margin-top:12px}
+  .btn-cert:hover{border-color:var(--cyan)}
+  .authbtns{display:flex;gap:10px}
+  .btn-soft{flex:1;background:#eef4f4;color:var(--teal);text-decoration:none}
+  .btn-soft:hover{background:#e2eded}
+  .divider{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:12px;margin:20px 0}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+  .err{background:#f6dcd5;color:var(--err);font-size:12.5px;padding:9px 11px;border-radius:9px;margin-bottom:14px;display:none}
+  .note{font-size:11.5px;color:var(--mut);line-height:1.5;margin-top:22px;text-align:center}
+  .signup{text-align:center;font-size:13.5px;color:var(--mut);margin-top:18px}
+  .signup a{color:var(--cyan);font-weight:600;text-decoration:none}
+  @media(max-width:880px){body{grid-template-columns:1fr}.brandside{display:none}.loginside{min-height:100vh}}
+</style>
+</head>
+<body>
+  <!-- PAINEL DE MARCA -->
+  <aside class="brandside">
+    <svg class="orbit" viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="80" stroke="#7fb6c0" stroke-width="1" stroke-dasharray="3 6"/><circle cx="100" cy="100" r="54" stroke="#7fb6c0" stroke-width="1" stroke-dasharray="3 6"/><circle cx="100" cy="20" r="5" fill="#e6a23c"/><circle cx="180" cy="100" r="5" fill="#7fe0d0"/><circle cx="100" cy="100" r="10" fill="#e6a23c"/></svg>
+    <div class="logo">
+      <div class="mark"><svg viewBox="0 0 24 24" fill="none"><g stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M12 3v5M12 16v5M3 12h5M16 12h5M5.6 5.6l3.5 3.5M14.9 14.9l3.5 3.5M18.4 5.6l-3.5 3.5M9.1 14.9l-3.5 3.5"/></g><circle cx="12" cy="12" r="2.3" fill="#fff"/></svg></div>
+      <div class="nm">Delfos<small>EchoFlow · oráculo do laudo</small></div>
+    </div>
+    <h1>O laudo de ultrassom que <span>não trava</span> e não conta créditos.</h1>
+    <p>Fala → laudo → assina. Cálculos automáticos, correção por voz e assinatura ICP-Brasil — com o médico sempre no controle.</p>
+    <div class="feats">
+      <div class="feat"><span class="d">∞</span> Laudos ilimitados, sem créditos</div>
+      <div class="feat"><span class="d">⚡</span> Latência-alvo de transcrição &lt;300ms</div>
+      <div class="feat"><span class="d">🔏</span> Assinatura digital VIDaaS / ICP-Brasil</div>
+      <div class="feat"><span class="d">🔒</span> Dados de saúde protegidos (LGPD)</div>
+    </div>
+  </aside>
+
+  <!-- FORMULÁRIO -->
+  <main class="loginside">
+    <div class="box">
+      <h2>Entrar</h2>
+      <p class="sub">Acesse sua conta para gerar e assinar laudos.</p>
+      <div id="erro" class="err"></div>
+      <form id="form" onsubmit="entrar(event)">
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input id="email" type="email" placeholder="seu@email.com" autocomplete="username" value="evairsantiago.pericias@gmail.com">
+        </div>
+        <div class="field">
+          <label for="senha">Senha</label>
+          <div class="inp">
+            <input id="senha" type="password" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="toggle" onclick="verSenha(this)">mostrar</button>
+          </div>
+        </div>
+        <div class="rowbetween">
+          <label><input type="checkbox" id="lembrar"> Manter conectado</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Entrar →</button>
+      </form>
+      <button class="btn btn-cert" onclick="entrarCert()">🪪 Entrar com certificado digital (VIDaaS / gov.br)</button>
+      <div class="divider">novo por aqui?</div>
+      <div class="authbtns">
+        <a class="btn btn-soft" href="cadastro.html">＋ Criar conta</a>
+        <a class="btn btn-soft" href="recuperar.html">🔑 Recuperar senha</a>
+      </div>
+      <p class="note">A autenticação real (senha protegida, verificação em duas etapas e trilha de auditoria) roda no backend, em conformidade com a LGPD — nenhuma senha é processada nesta demonstração.</p>
+      <div class="signup"><a href="termos.html">Termos de Uso</a> · <a href="privacidade.html">Política de Privacidade (LGPD)</a></div>
+    </div>
+  </main>
+
+<script>
+  const API=(localStorage.getItem('delfos_api')||((location.origin&&location.origin.indexOf('http')===0)?location.origin:'http://localhost:8000'));
+  function verSenha(btn){const i=document.getElementById('senha');const p=i.type==='password';i.type=p?'text':'password';btn.textContent=p?'ocultar':'mostrar';}
+  function showErr(m){const e=document.getElementById('erro');e.textContent=m;e.style.display='block';}
+  async function entrar(ev){
+    ev.preventDefault();
+    const email=document.getElementById('email').value.trim(), senha=document.getElementById('senha').value;
+    if(!email){showErr('Informe seu e-mail.');return;}
+    if(!senha){showErr('Informe sua senha.');return;}
+    try{
+      const r=await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,senha})});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok){showErr(j.detail||'E-mail ou senha incorretos.');return;}
+      window.location.href='index.html';
+    }catch(err){showErr('Não foi possível conectar ao servidor ('+API+'). Verifique se o backend está rodando.');}
+  }
+  function entrarCert(){
+    // Em produção: inicia o fluxo OAuth/PKCE da VIDaaS (push/QR) — o mesmo certificado usado para assinar.
+    window.location.href='index.html';
+  }
+</script>
+</body>
+</html>

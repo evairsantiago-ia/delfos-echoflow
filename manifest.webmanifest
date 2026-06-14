@@ -1,0 +1,3 @@
+{ "name":"Delfos EchoFlow","short_name":"Delfos","start_url":"./index.html",
+  "display":"standalone","background_color":"#0f3b46","theme_color":"#0f3b46",
+  "description":"Laudo de ultrassom por voz — protótipo","icons":[] }

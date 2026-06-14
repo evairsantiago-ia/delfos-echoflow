@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delfos EchoFlow · Recuperar senha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--teal:#0f3b46;--cyan:#1f8a9c;--amber:#e6a23c;--ink:#10242a;--line:#dde6e7;--mut:#62777d;--err:#b3402f;--ok:#2e7d52;--ui:'Inter',-apple-system,Segoe UI,Roboto,Arial,sans-serif;--serif:'Fraunces',Georgia,serif;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--ui);color:var(--ink);min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(900px 420px at 80% 0,#cfe6ea 0,transparent 60%),#eef2f3}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 14px 38px rgba(16,40,46,.14);max-width:430px;width:100%;padding:40px 34px}
+  .mark{width:48px;height:48px;border-radius:12px;background:linear-gradient(150deg,#e6a23c,#d6892a);display:grid;place-items:center;margin:0 auto 16px}.mark svg{width:31px;height:31px}
+  h1{font-family:var(--serif);font-size:25px;margin:0 0 6px;text-align:center}
+  .sub{color:var(--mut);font-size:14px;text-align:center;margin:0 0 22px;line-height:1.5}
+  label{font-size:12px;color:var(--mut);font-weight:600;display:block;margin:0 0 6px}
+  input{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:11px;font:inherit;font-size:15px;background:#fcfefe}
+  input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(31,138,156,.15)}
+  .btn{width:100%;padding:13px;border:none;border-radius:11px;font:inherit;font-size:15px;font-weight:700;cursor:pointer;margin-top:16px;background:linear-gradient(180deg,#15525f,#0f3b46);color:#fff;box-shadow:0 5px 16px rgba(15,59,70,.3);display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;transition:.16s}
+  .btn:hover{transform:translateY(-1px)}
+  .err{background:#f6dcd5;color:var(--err);font-size:12.5px;padding:9px 11px;border-radius:9px;margin-bottom:14px;display:none}
+  .note{font-size:11.5px;color:var(--mut);line-height:1.5;margin-top:18px;text-align:center}
+  .back{display:block;text-align:center;margin-top:14px;color:var(--cyan);font-weight:600;text-decoration:none;font-size:13.5px}
+  .mailicon{width:70px;height:70px;border-radius:50%;background:#e3f3ea;color:var(--ok);display:grid;place-items:center;font-size:32px;margin:0 auto 16px}
+</style>
+</head>
+<body>
+  <div class="card" id="boxForm">
+    <div class="mark"><svg viewBox="0 0 24 24" fill="none"><g stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M12 3v5M12 16v5M3 12h5M16 12h5M5.6 5.6l3.5 3.5M14.9 14.9l3.5 3.5M18.4 5.6l-3.5 3.5M9.1 14.9l-3.5 3.5"/></g><circle cx="12" cy="12" r="2.3" fill="#fff"/></svg></div>
+    <h1>Recuperar senha</h1>
+    <p class="sub">Informe o e-mail da sua conta. Enviaremos um link para você redefinir a senha.</p>
+    <div id="erro" class="err"></div>
+    <form onsubmit="enviar(event)">
+      <label for="email">E-mail</label>
+      <input id="email" type="email" placeholder="seu@email.com">
+      <button type="submit" class="btn">Enviar link de redefinição →</button>
+    </form>
+    <a class="back" href="login.html">← Voltar ao login</a>
+  </div>
+
+  <div class="card" id="boxCheck" style="display:none">
+    <div class="mailicon">✉</div>
+    <h1>Verifique seu e-mail</h1>
+    <p class="sub">Se houver uma conta para <b id="dest"></b>, enviamos um link para redefinir a senha. O link expira em 1 hora.</p>
+    <a class="btn" id="lnkRedef" href="#">Abrir página de redefinição (demo)</a>
+    <a class="back" href="login.html">← Voltar ao login</a>
+    <p class="note">Demonstração: o envio real do e-mail e o token de redefinição são gerados pelo backend.</p>
+  </div>
+
+<script>
+  const API=(localStorage.getItem('delfos_api')||((location.origin&&location.origin.indexOf('http')===0)?location.origin:'http://localhost:8000'));
+  async function enviar(ev){ev.preventDefault();const e=document.getElementById('email').value.trim();const x=document.getElementById('erro');
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){x.textContent='Informe um e-mail válido.';x.style.display='block';return;}
+    try{
+      const r=await fetch(API+'/auth/recuperar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e})});
+      const j=await r.json().catch(()=>({}));
+      document.getElementById('dest').textContent=e;
+      const lnk=document.getElementById('lnkRedef');
+      if(j.dev_link){lnk.style.display='flex';lnk.href=j.dev_link;lnk.textContent='Abrir link de redefinição (SMTP não configurado)';}
+      else{lnk.style.display='none';}
+      document.getElementById('boxForm').style.display='none';document.getElementById('boxCheck').style.display='block';
+    }catch(err){x.textContent='Não foi possível conectar ao servidor ('+API+').';x.style.display='block';}}
+</script>
+</body>
+</html>
