@@ -34,7 +34,7 @@
     <p class="note">O backend valida o token do link, ativa a conta e registra o consentimento (LGPD).</p>
   </div>
 <script>
-  const API=(localStorage.getItem('delfos_api')||((location.origin&&location.origin.indexOf('http')===0)?location.origin:'http://localhost:8000'));
+  const API=(function(){var o=(location.origin&&location.origin.indexOf('http')===0)?location.origin:'';var s=localStorage.getItem('delfos_api');if(s&&s.indexOf('localhost')>=0)s='';return o||s||'https://creative-profiterole-865da4.netlify.app';})();
   const token=new URLSearchParams(location.search).get('token')||'';
   function estado(icon,bg,cor,titulo,msg,mostrarBtn){
     const ic=document.getElementById('icon');ic.textContent=icon;ic.style.background=bg;ic.style.color=cor;

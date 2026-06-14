@@ -113,7 +113,7 @@
   </main>
 
 <script>
-  const API=(localStorage.getItem('delfos_api')||((location.origin&&location.origin.indexOf('http')===0)?location.origin:'http://localhost:8000'));
+  const API=(function(){var o=(location.origin&&location.origin.indexOf('http')===0)?location.origin:'';var s=localStorage.getItem('delfos_api');if(s&&s.indexOf('localhost')>=0)s='';return o||s||'https://creative-profiterole-865da4.netlify.app';})();
   let devLink='', lastPayload=null;
   function verSenha(id,btn){const i=document.getElementById(id);const p=i.type==='password';i.type=p?'text':'password';btn.textContent=p?'ocultar':'mostrar';}
   function showErr(m){const e=document.getElementById('erro');e.textContent=m;e.style.display='block';}

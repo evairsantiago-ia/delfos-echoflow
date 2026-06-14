@@ -50,7 +50,7 @@
   </div>
 
 <script>
-  const API=(localStorage.getItem('delfos_api')||((location.origin&&location.origin.indexOf('http')===0)?location.origin:'http://localhost:8000'));
+  const API=(function(){var o=(location.origin&&location.origin.indexOf('http')===0)?location.origin:'';var s=localStorage.getItem('delfos_api');if(s&&s.indexOf('localhost')>=0)s='';return o||s||'https://creative-profiterole-865da4.netlify.app';})();
   async function enviar(ev){ev.preventDefault();const e=document.getElementById('email').value.trim();const x=document.getElementById('erro');
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)){x.textContent='Informe um e-mail válido.';x.style.display='block';return;}
     try{

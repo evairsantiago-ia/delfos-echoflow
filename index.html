@@ -6,69 +6,78 @@
 <title>Delfos EchoFlow</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;1,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.7.0/dist/tabler-icons.min.css">
 <style>
   :root{
-    --ink:#10242a;--teal:#0f3b46;--teal2:#1c6b7d;--cyan:#1f8a9c;--amber:#e6a23c;--amber2:#f2b85a;
-    --bg1:#e9eff0;--bg2:#f6f9f9;--card:#fff;--line:#dde6e7;--mut:#62777d;--ok:#2e7d52;--warn:#c8861b;--err:#b3402f;
-    --r:16px;--r-sm:11px;
-    --sh:0 1px 2px rgba(16,40,46,.06),0 4px 16px rgba(16,40,46,.06);
-    --sh-lg:0 14px 38px rgba(16,40,46,.16);
+    /* paleta padrão: petróleo · bronze · marfim */
+    --ink:#20303a;--teal:#103a44;--teal2:#16525d;--cyan:#2f6b73;--amber:#9b7b3f;--amber2:#b08f4d;
+    --bg1:#f4f1ea;--bg2:#faf8f3;--card:#ffffff;--line:#e6e1d6;--mut:#6b7b80;--ok:#2e7d52;--warn:#a9772a;--err:#b3402f;
+    --r:14px;--r-sm:9px;
+    --sh:0 1px 2px rgba(20,40,46,.04);
+    --sh-lg:0 10px 30px rgba(20,40,46,.12);
     --ui:'Inter',-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
     --serif:'Fraunces',Georgia,serif;
     --laudo:'Lora',Georgia,'Times New Roman',serif;
+    --laudo-print-size:13px;--laudo-print-margin:2cm;
   }
+  /* === preferências de paleta (escolha do usuário) === */
+  html[data-palette="marinho"]{--teal:#16294a;--teal2:#21386a;--cyan:#3a567f;--amber:#7d6a4a;--amber2:#94815f;--bg1:#f2f3f6;--bg2:#f8f9fb;--line:#e3e6ec;--ink:#1b2533;}
+  html[data-palette="branco"]{--bg1:#ffffff;--bg2:#f6f8f8;--line:#e7ebec;}
+  html[data-palette="grafite"]{--teal:#2c3338;--teal2:#3c454c;--cyan:#5a666e;--amber:#9b7b3f;--bg1:#f3f3f1;--bg2:#fafaf8;--line:#e4e3df;--ink:#23282c;}
+  /* === preferências de tipografia === */
+  html[data-fonte="corporativo"]{--serif:'Inter',-apple-system,sans-serif;--laudo:'Inter',-apple-system,sans-serif;}
+  html[data-fonte="editorial"]{--laudo:'Source Serif 4','Lora',Georgia,serif;}
+  .ti{font-size:16px;line-height:1;vertical-align:-2px}
   *{box-sizing:border-box}
-  body{margin:0;font-family:var(--ui);color:var(--ink);
-    background:radial-gradient(1200px 600px at 80% -10%,#dfeaeb 0,transparent 60%),radial-gradient(900px 500px at -10% 110%,#e3edee 0,transparent 55%),var(--bg1);min-height:100vh}
-  header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:12px 22px;color:#eaf6f7;background:linear-gradient(110deg,#0c333c,#13525f 60%,#176475);box-shadow:0 6px 24px rgba(10,40,46,.28)}
+  body{margin:0;font-family:var(--ui);color:var(--ink);background:var(--bg1);min-height:100vh}
+  header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:13px 24px;color:#e9f1f0;background:var(--teal);border-bottom:1px solid rgba(255,255,255,.06)}
   .brand{display:flex;align-items:center;gap:11px}
-  .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(150deg,#e6a23c,#d6892a);display:grid;place-items:center;box-shadow:0 4px 12px rgba(214,137,42,.45);flex-shrink:0}
-  .mark svg{width:22px;height:22px}
-  .wordmark{font-family:var(--serif);font-size:21px;font-weight:600;letter-spacing:.3px;line-height:1}
-  .wordmark small{display:block;font-family:var(--ui);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#8fc2cb;font-weight:600;margin-top:2px}
-  nav{display:flex;gap:4px;margin-left:6px;flex-wrap:wrap}
-  nav button{background:transparent;color:#bcd9de;border:none;padding:9px 15px;border-radius:10px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:.18s}
-  nav button:hover{color:#fff;background:rgba(255,255,255,.08)}
-  nav button.active{color:#10242a;background:linear-gradient(180deg,#fff,#eaf6f7);box-shadow:0 3px 10px rgba(0,0,0,.18)}
+  .mark{width:32px;height:32px;border-radius:8px;background:var(--amber);display:grid;place-items:center;flex-shrink:0}
+  .mark svg{width:20px;height:20px}
+  .wordmark{font-family:var(--serif);font-size:20px;font-weight:500;letter-spacing:.3px;line-height:1}
+  .wordmark small{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:1.8px;text-transform:uppercase;color:#9fc0bd;font-weight:500;margin-top:3px}
+  nav{display:flex;gap:2px;margin-left:8px;flex-wrap:wrap}
+  nav button{background:transparent;color:#aecccb;border:none;padding:9px 14px;border-radius:8px;font:inherit;font-size:13.5px;font-weight:500;cursor:pointer;transition:.16s;display:flex;align-items:center;gap:7px}
+  nav button:hover{color:#fff;background:rgba(255,255,255,.07)}
+  nav button.active{color:var(--teal);background:#fff}
   .spacer{margin-left:auto}
-  .who{display:flex;align-items:center;gap:9px;font-size:12px;color:#cfe7ea}
-  .who .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(150deg,#1f8a9c,#2eb0a3);display:grid;place-items:center;font-weight:700;color:#fff}
-  .badge{font-size:11px;background:rgba(230,162,60,.92);color:#3a2a06;padding:4px 10px;border-radius:20px;font-weight:700}
+  .who{display:flex;align-items:center;gap:9px;font-size:13px;color:#cfe2e0}
+  .who .av{width:30px;height:30px;border-radius:50%;background:var(--teal2);display:grid;place-items:center;font-weight:500;color:#fff;border:1px solid rgba(255,255,255,.18)}
+  .namebtn{background:transparent;border:none;color:#eaf3f2;font:inherit;font-size:13.5px;font-weight:500;cursor:pointer;padding:4px 6px;border-radius:7px}
+  .namebtn:hover{background:rgba(255,255,255,.1)}
   main{max-width:1520px;margin:0 auto;padding:20px}
   .enter{animation:fadeUp .32s cubic-bezier(.2,.7,.3,1)}
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--sh);margin-bottom:18px}
-  .card h2{margin:0 0 14px;font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--teal2);font-weight:700;display:flex;align-items:center;gap:8px}
-  .card h2::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--amber)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--sh);margin-bottom:18px}
+  .card h2{margin:0 0 16px;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--accent,var(--amber));font-weight:500;display:flex;align-items:center;gap:8px}
   .grid-3{display:grid;grid-template-columns:320px 1fr 372px;gap:18px;align-items:start}
   .grid-3 .card{margin-bottom:0}
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-  label{font-size:11.5px;color:var(--mut);display:block;margin:11px 0 5px;font-weight:600}
-  select,input,textarea{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:var(--r-sm);font:inherit;font-size:14px;background:#fcfefe;transition:.15s}
-  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(31,138,156,.15)}
+  label{font-size:10.5px;color:var(--mut);display:block;margin:12px 0 5px;font-weight:500;text-transform:uppercase;letter-spacing:.08em}
+  select,input,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm);font:inherit;font-size:14px;background:var(--bg2);color:var(--ink);transition:.15s}
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--teal2);box-shadow:0 0 0 3px rgba(22,82,93,.12);background:#fff}
   textarea{min-height:64px;resize:vertical}
-  button.act{cursor:pointer;border:none;border-radius:var(--r-sm);padding:10px 15px;font:inherit;font-size:14px;font-weight:600;transition:.16s;display:inline-flex;align-items:center;justify-content:center;gap:7px}
-  button.act:hover{transform:translateY(-1px)}
-  .btn-primary{background:linear-gradient(180deg,#15525f,#0f3b46);color:#fff;box-shadow:0 4px 12px rgba(15,59,70,.28)}
-  .btn-ghost{background:#eef4f4;color:var(--teal2)} .btn-ghost:hover{background:#e2eded}
-  .btn-amber{background:linear-gradient(180deg,#eeac55,#e0961f);color:#3a2a06;box-shadow:0 4px 12px rgba(224,150,31,.35)}
-  .btn-voz{background:linear-gradient(180deg,#26a0b4,#187d8f);color:#fff;box-shadow:0 4px 12px rgba(24,125,143,.32)}
-  .btn-voz.rec{background:linear-gradient(180deg,#cf5141,#b3402f);animation:pulse 1.2s infinite}
-  .btn-danger{background:#f6dcd5;color:var(--err)} .btn-danger:hover{background:#f0cabf}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(179,64,47,.5)}70%{box-shadow:0 0 0 12px rgba(179,64,47,0)}100%{box-shadow:0 0 0 0 rgba(179,64,47,0)}}
+  button.act{cursor:pointer;border:1px solid transparent;border-radius:var(--r-sm);padding:10px 15px;font:inherit;font-size:13.5px;font-weight:500;transition:.16s;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+  .btn-primary{background:var(--teal);color:#fff} .btn-primary:hover{background:var(--teal2)}
+  .btn-ghost{background:transparent;color:var(--teal2);border-color:var(--line)} .btn-ghost:hover{background:var(--bg2)}
+  .btn-amber{background:var(--amber);color:#fff} .btn-amber:hover{background:var(--amber2)}
+  .btn-voz{background:var(--teal2);color:#fff} .btn-voz:hover{background:var(--teal)}
+  .btn-voz.rec{background:var(--err);animation:pulse 1.4s infinite}
+  .btn-danger{background:transparent;color:var(--err);border-color:#e7cdc6} .btn-danger:hover{background:#fbf0ed}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(179,64,47,.35)}70%{box-shadow:0 0 0 10px rgba(179,64,47,0)}100%{box-shadow:0 0 0 0 rgba(179,64,47,0)}}
   .row{display:flex;gap:8px;flex-wrap:wrap}
-  .pill{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:700}
-  .pill.ok{background:#e3f3ea;color:var(--ok)} .pill.wait{background:#f6e9d3;color:#8a6112} .pill.off{background:#f6dcd5;color:var(--err)}
-  .hero{position:relative;overflow:hidden;border-radius:20px;padding:34px 32px;margin-bottom:18px;color:#eef9fa;background:radial-gradient(900px 380px at 88% 0,#1b6072 0,transparent 60%),linear-gradient(125deg,#0b313a,#114a57 55%,#0d3b46)}
-  .hero h1{font-family:var(--serif);font-weight:600;margin:0 0 8px;font-size:32px;line-height:1.1;max-width:620px}
+  .pill{font-size:10.5px;padding:4px 10px;border-radius:20px;font-weight:500;letter-spacing:.03em}
+  .pill.ok{background:#e7f1ec;color:#1f5a3f} .pill.wait{background:#f3ecdd;color:#7a5b22} .pill.off{background:#f4e3dd;color:#8a3a2c}
+  .hero{position:relative;overflow:hidden;border-radius:var(--r);padding:38px 34px;margin-bottom:18px;color:#eaf3f2;background:var(--teal);border:1px solid rgba(255,255,255,.05)}
+  .hero h1{font-family:var(--serif);font-weight:500;margin:0 0 10px;font-size:30px;line-height:1.15;max-width:620px;letter-spacing:.2px}
   .hero h1 span{color:var(--amber2)}
-  .hero p{margin:0;max-width:560px;color:#bfdde2;font-size:15px;line-height:1.5}
-  .hero .row{margin-top:20px}.hero .big{padding:12px 20px;font-size:15px}
-  .hero .big.white{background:#fff;color:var(--teal)}.hero .big.amber{background:linear-gradient(180deg,#eeac55,#e0961f);color:#3a2a06}
-  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
-  .chip{font-size:12px;color:#cfe7ea;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);padding:5px 12px;border-radius:20px}
-  .orbit{position:absolute;right:-40px;top:50%;transform:translateY(-50%);width:340px;height:340px;opacity:.5;pointer-events:none}
+  .hero p{margin:0;max-width:560px;color:#bcd6d3;font-size:15px;line-height:1.6}
+  .hero .row{margin-top:22px}.hero .big{padding:11px 20px;font-size:14.5px}
+  .hero .big.white{background:#fff;color:var(--teal)}.hero .big.amber{background:var(--amber);color:#fff}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+  .chip{font-size:12px;color:#cfe2df;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);padding:5px 12px;border-radius:6px}
+  .orbit{position:absolute;right:-40px;top:50%;transform:translateY(-50%);width:320px;height:320px;opacity:.32;pointer-events:none}
   .toolbar{display:flex;gap:5px;flex-wrap:wrap;border:1px solid var(--line);border-bottom:none;border-radius:var(--r-sm) var(--r-sm) 0 0;padding:7px;background:#f3f8f8}
   .toolbar button,.toolbar select{padding:6px 10px;border:1px solid transparent;background:#fff;border-radius:8px;cursor:pointer;font:inherit;font-size:13px;width:auto;transition:.15s}
   .toolbar button:hover{border-color:var(--line);background:#eef4f4}
@@ -90,7 +99,7 @@
   th{color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:700}tr:hover td{background:#f5fafa}
   .clin-card{display:flex;gap:14px;align-items:flex-start;padding:16px;border:1px solid var(--line);border-radius:var(--r);margin-bottom:12px;background:#fcfefe;transition:.16s}
   .clin-card:hover{box-shadow:var(--sh)}
-  .clin-card .ic{width:44px;height:44px;border-radius:12px;background:linear-gradient(150deg,#1f8a9c,#15525f);color:#fff;display:grid;place-items:center;font-weight:700;font-size:18px;flex-shrink:0;overflow:hidden}
+  .clin-card .ic{width:44px;height:44px;border-radius:10px;background:var(--teal2);color:#fff;display:grid;place-items:center;font-weight:500;font-size:18px;flex-shrink:0;overflow:hidden}
   .clin-card .ic img{width:100%;height:100%;object-fit:cover}
   .subtabs{display:flex;gap:6px;margin:14px 0 12px;flex-wrap:wrap}
   .subtabs button{padding:7px 13px;border:1px solid var(--line);background:#fff;border-radius:20px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;color:var(--mut)}
@@ -115,8 +124,8 @@
     .grid-3{display:block}.grid-3>.card:not(.laudo-card){display:none!important}
     .laudo-card{border:none;padding:0;margin:0;box-shadow:none}.docpage{border:none;border-radius:0;box-shadow:none}
     .cabec{border-bottom:1px solid #999;background:#fff}.rodape{border-top:1px solid #999;background:#fff}
-    .corpo{font-size:13px;min-height:auto}
-    @page{size:A4;margin:2cm}
+    .corpo{font-size:var(--laudo-print-size);min-height:auto;font-family:var(--laudo)}
+    @page{size:A4;margin:var(--laudo-print-margin)}
   }
 </style>
 </head>
@@ -127,13 +136,13 @@
     <div class="wordmark">Delfos<small>EchoFlow · oráculo do laudo</small></div>
   </div>
   <nav>
-    <button id="nav-painel" class="active" onclick="go('painel')">◆ Painel</button>
-    <button id="nav-laudo" onclick="go('laudo')">✎ Novo Laudo</button>
-    <button id="nav-arquivo" onclick="go('arquivo')">▤ Arquivo</button>
-    <button id="nav-clinicas" onclick="go('clinicas')">⌂ Clínicas</button>
+    <button id="nav-painel" class="active" onclick="go('painel')"><i class="ti ti-layout-dashboard"></i> Painel</button>
+    <button id="nav-laudo" onclick="go('laudo')"><i class="ti ti-pencil"></i> Novo laudo</button>
+    <button id="nav-arquivo" onclick="go('arquivo')"><i class="ti ti-folder"></i> Arquivo</button>
+    <button id="nav-clinicas" onclick="go('clinicas')"><i class="ti ti-building-hospital"></i> Clínicas</button>
   </nav>
   <div class="spacer"></div>
-  <div class="who"><span class="badge">PROTÓTIPO</span><span class="av">C</span><span>Dra. Caroline</span><button class="act btn-ghost" style="padding:6px 12px;margin-left:4px" onclick="location.href='login.html'">Sair</button></div>
+  <div class="who"><span class="av" id="userAv">M</span><button class="namebtn" id="userName" onclick="abrirPerfil()" title="Meu perfil">Médico(a)</button><button class="act btn-ghost" style="padding:6px 12px;margin-left:4px" onclick="logout()">Sair</button></div>
 </header>
 
 <main>
@@ -143,7 +152,7 @@
       <svg class="orbit" viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="78" stroke="#7fb6c0" stroke-width="1" stroke-dasharray="3 6"/><circle cx="100" cy="100" r="52" stroke="#7fb6c0" stroke-width="1" stroke-dasharray="3 6"/><circle cx="100" cy="22" r="4" fill="#e6a23c"/><circle cx="178" cy="100" r="4" fill="#7fe0d0"/><circle cx="100" cy="178" r="4" fill="#9fc8d0"/><circle cx="22" cy="100" r="4" fill="#e6a23c"/><circle cx="100" cy="100" r="9" fill="#e6a23c"/></svg>
       <h1>Fala → laudo → <span>assina</span>. Sem travar, sem créditos.</h1>
       <p>Laudo de ultrassom ditado por voz, com cálculos automáticos, correção em tempo real e assinatura ICP-Brasil. O médico sempre no controle.</p>
-      <div class="row"><button class="act big white" onclick="go('laudo')">＋ Novo laudo</button><button class="act big amber" onclick="go('arquivo')">▤ Abrir arquivo</button></div>
+      <div class="row"><button class="act big white" onclick="go('laudo')"><i class="ti ti-plus"></i> Novo laudo</button><button class="act big white" onclick="novaClinica()"><i class="ti ti-plus"></i> Nova clínica</button><button class="act big amber" onclick="go('arquivo')">▤ Abrir arquivo</button></div>
       <div class="chips"><span class="chip">Laudos ilimitados</span><span class="chip">Assinatura VIDaaS / ICP-Brasil</span><span class="chip">SIGTAP + CID</span><span class="chip">pt-BR nativo</span></div>
     </div>
     <div class="grid-2">
@@ -178,12 +187,12 @@
           <option value="E04.9 — Bócio não tóxico"><option value="D24 — Neoplasia benigna da mama"><option value="Z36 — Rastreamento pré-natal">
           <option value="R19.0 — Massa/tumefação abdominal"><option value="N28.1 — Cisto renal">
         </datalist>
-        <label>Médico (assinatura)</label><input id="medico" value="Dra. Caroline Turino Battini Santiago — CRM-MS:11.375" readonly>
+        <label>Médico (assinatura)</label><input id="medico" placeholder="seu nome — CRM" readonly>
         <hr style="border:none;border-top:1px solid var(--line);margin:16px 0">
         <h2>Modelo deste exame</h2>
-        <div class="upbox" onclick="document.getElementById('upMascara').click()">⬆️ Enviar modelo (.md/.txt/.html)<br>para "<span id="upExameNome">…</span>"</div>
+        <div class="upbox" onclick="document.getElementById('upMascara').click()"><i class="ti ti-upload"></i> Enviar modelo (.md/.txt/.html)<br>para "<span id="upExameNome">…</span>"</div>
         <input type="file" id="upMascara" class="hide" accept=".md,.txt,.html,.htm" onchange="uploadMascara(this)">
-        <button class="act btn-ghost" style="width:100%;margin-top:8px" onclick="salvarModelo()">📌 Salvar texto atual como modelo</button>
+        <button class="act btn-ghost" style="width:100%;margin-top:8px" onclick="salvarModelo()"><i class="ti ti-pin"></i> Salvar texto atual como modelo</button>
         <div id="upLista" style="font-size:12px;margin-top:10px"></div>
       </div>
 
@@ -195,7 +204,7 @@
           <button onclick="fmt('bold')"><b>N</b></button><button onclick="fmt('italic')"><i>I</i></button><button onclick="fmt('underline')"><u>S</u></button>
           <button onclick="fmt('insertUnorderedList')">• Lista</button>
           <button onclick="fmt('justifyLeft')">⯇</button><button onclick="fmt('justifyCenter')">≡</button><button onclick="fmt('justifyRight')">⯈</button>
-          <button onclick="undo()" title="Desfazer">↶</button>
+          <button onclick="undo()" title="Desfazer"><i class="ti ti-arrow-back-up"></i></button>
         </div>
         <div class="docpage">
           <div class="zonelbl no-print">Cabeçalho · timbre</div>
@@ -209,23 +218,24 @@
 
       <div class="card no-print">
         <h2>3 · Ditar medidas / achados</h2>
-        <button id="btnVoz" class="act btn-voz" style="width:100%" onclick="toggleVoz('ditado')">🎤 Falar medidas</button>
+        <button id="btnVoz" class="act btn-voz" style="width:100%" onclick="toggleVoz('ditado')"><i class="ti ti-microphone"></i> Falar medidas</button>
         <textarea id="entrada" placeholder="ex.: 'útero 7 por 4 por 3, endométrio 8' — ou digite e clique em Incorporar"></textarea>
-        <div class="row"><button class="act btn-primary" onclick="incorporar()">＋ Incorporar</button><button class="act btn-amber" onclick="normalidade()">✓ Normalidade</button><button class="act btn-ghost" id="btnIA" onclick="estruturarIA()">✨ Estruturar com IA</button></div>
+        <div class="row"><button class="act btn-primary" onclick="incorporar()"><i class="ti ti-plus"></i> Incorporar</button><button class="act btn-amber" onclick="normalidade()"><i class="ti ti-check"></i> Normalidade</button><button class="act btn-ghost" id="btnIA" onclick="estruturarIA()"><i class="ti ti-wand"></i> Estruturar com IA</button></div>
         <div id="vozStatus" class="vozstatus"></div>
         <h2 style="margin-top:18px">Cálculos & alertas</h2>
         <div id="calculos"><p class="muted">Área (cm²) e volume (cm³) automáticos; alerta sinaliza normal/avaliar.</p></div>
+        <div id="classificador"></div>
         <h2 style="margin-top:18px">4 · Comando de correção</h2>
-        <div class="row" style="margin-bottom:6px"><button id="btnVozCmd" class="act btn-voz" style="flex:1" onclick="toggleVoz('comando')">🎤 Falar</button><button class="act btn-ghost" style="flex:1" onclick="document.getElementById('comando').focus()">⌨️ Digitar</button></div>
+        <div class="row" style="margin-bottom:6px"><button id="btnVozCmd" class="act btn-voz" style="flex:1" onclick="toggleVoz('comando')"><i class="ti ti-microphone"></i> Falar</button><button class="act btn-ghost" style="flex:1" onclick="document.getElementById('comando').focus()"><i class="ti ti-keyboard"></i> Digitar</button></div>
         <input id="comando" placeholder="ex.: trocar homogênea por heterogênea (Enter aplica)" onkeydown="if(event.key==='Enter')executarComando()">
         <p class="muted" style="margin:4px 0 0">No ditado, diga <b>"finalizar"</b> para encerrar; <b>"normalidade"</b> preenche o padrão.</p>
-        <div class="row"><button class="act btn-primary" onclick="executarComando()">Aplicar no laudo</button><button class="act btn-ghost" onclick="undo()">↶ Desfazer</button></div>
+        <div class="row"><button class="act btn-primary" onclick="executarComando()">Aplicar no laudo</button><button class="act btn-ghost" onclick="undo()"><i class="ti ti-arrow-back-up"></i> Desfazer</button></div>
         <div id="readback" class="readback"></div>
         <h2 style="margin-top:18px">5 · Finalizar</h2>
-        <div class="row"><button class="act btn-amber" onclick="assinar()">🔏 Assinar</button><button class="act btn-primary" onclick="salvarLaudo()">💾 Salvar…</button><button class="act btn-ghost" onclick="imprimirA4()">🖨️ A4</button></div>
+        <div class="row"><button class="act btn-amber" onclick="assinar()"><i class="ti ti-signature"></i> Assinar</button><button class="act btn-primary" onclick="salvarLaudo()"><i class="ti ti-device-floppy"></i> Salvar…</button><button class="act btn-ghost" onclick="imprimirA4()"><i class="ti ti-printer"></i> A4</button></div>
         <div id="assinaturaBox" style="margin-top:10px"></div>
         <div id="printStatus" class="muted" style="margin-top:8px"></div>
-        <details style="margin-top:10px"><summary class="muted">🧾 Imprimir etiqueta/cupom (opcional)</summary><p class="muted" style="margin-top:6px">Para impressora <b>térmica</b> (cupom/etiqueta), não A4. Requer o app <b>QZ Tray</b>.</p><button class="act btn-ghost" onclick="imprimirTermica()">Conectar térmica</button></details>
+        <details style="margin-top:10px"><summary class="muted"><i class="ti ti-receipt"></i> Imprimir etiqueta/cupom (opcional)</summary><p class="muted" style="margin-top:6px">Para impressora <b>térmica</b> (cupom/etiqueta), não A4. Requer o app <b>QZ Tray</b>.</p><button class="act btn-ghost" onclick="imprimirTermica()">Conectar térmica</button></details>
       </div>
     </div>
   </section>
@@ -236,7 +246,7 @@
       <h2>Arquivo — laudos salvos</h2>
       <div class="row" style="margin-bottom:14px">
         <select id="f-clinica" style="max-width:220px" onchange="renderArquivo()"><option value="">Todas as clínicas</option></select>
-        <input id="f-busca" placeholder="🔎 Nome do paciente" style="max-width:230px" oninput="renderArquivo()">
+        <input id="f-busca" placeholder="<i class="ti ti-search"></i> Nome do paciente" style="max-width:230px" oninput="renderArquivo()">
         <input id="f-data" type="date" style="max-width:170px" onchange="renderArquivo()" title="Filtrar por data">
         <button class="act btn-ghost" onclick="limparFiltros()">Limpar</button>
         <span class="muted" id="arq-conta" style="align-self:center"></span>
@@ -252,12 +262,55 @@
       <div class="row" style="margin-bottom:14px">
         <input id="novaClin" placeholder="Nome da nova clínica" style="max-width:240px">
         <input id="novaClinSis" placeholder="Sistema de prontuário (opcional)" style="max-width:230px">
-        <button class="act btn-primary" onclick="addClinica()">＋ Adicionar clínica</button>
+        <button class="act btn-primary" onclick="addClinica()"><i class="ti ti-plus"></i> Adicionar clínica</button>
       </div>
       <div id="clinicas-list"></div>
     </div>
   </section>
 </main>
+<!-- PAINEL DE PERFIL -->
+<div id="perfilModal" style="display:none;position:fixed;inset:0;background:rgba(10,30,35,.45);z-index:100;align-items:center;justify-content:center;padding:18px">
+  <div class="card" style="max-width:460px;width:100%;margin:0;max-height:88vh;overflow:auto">
+    <h2>Meu perfil</h2>
+    <div class="calc-line"><span>Nome</span><b id="perfilNome">—</b></div>
+    <div class="calc-line"><span>E-mail</span><b id="perfilEmail">—</b></div>
+    <div class="calc-line"><span>CRM</span><b id="perfilCrm">—</b></div>
+
+    <h2 style="margin-top:18px">Aparência</h2>
+    <label>Paleta de cores</label>
+    <select id="pref_paleta" onchange="aplicarPaleta(this.value)">
+      <option value="">Petróleo · bronze · marfim (padrão)</option>
+      <option value="marinho">Azul-marinho · cinza</option>
+      <option value="branco">Petróleo · branco</option>
+      <option value="grafite">Grafite · bronze</option>
+    </select>
+    <label>Tipografia</label>
+    <select id="pref_fonte" onchange="aplicarFonte(this.value)">
+      <option value="">Equilibrado (serifa nos títulos)</option>
+      <option value="corporativo">Corporativo (sem serifa)</option>
+      <option value="editorial">Editorial (serifa no laudo)</option>
+    </select>
+
+    <h2 style="margin-top:18px">Impressão do laudo</h2>
+    <div class="row">
+      <div style="flex:1"><label>Tamanho da fonte</label>
+        <select id="pref_psize" onchange="aplicarImpressao()"><option value="12px">Pequena</option><option value="13px" selected>Normal</option><option value="14px">Média</option><option value="15px">Grande</option></select></div>
+      <div style="flex:1"><label>Margens</label>
+        <select id="pref_pmargin" onchange="aplicarImpressao()"><option value="1.5cm">Estreitas</option><option value="2cm" selected>Normais</option><option value="2.5cm">Largas</option><option value="3cm 2cm 2cm 2cm">Topo alto (timbre)</option></select></div>
+    </div>
+    <p class="muted" style="margin-top:6px">Aplica à impressão A4 e ao arquivo salvo. A fonte do laudo segue a tipografia escolhida acima.</p>
+
+    <h2 style="margin-top:18px">Alterar senha</h2>
+    <label>Senha atual</label><input id="pf_atual" type="password" placeholder="senha atual">
+    <label>Nova senha</label><input id="pf_nova" type="password" placeholder="mínimo 8 caracteres">
+    <label>Confirmar nova senha</label><input id="pf_nova2" type="password" placeholder="repita a nova senha">
+    <div id="pf_msg" class="muted" style="margin-top:8px;min-height:16px"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="act btn-primary" onclick="alterarSenha()">Salvar nova senha</button>
+      <button class="act btn-ghost" onclick="fecharPerfil()">Fechar</button>
+    </div>
+  </div>
+</div>
 <div id="toast"></div>
 <footer>Delfos EchoFlow · protótipo funcional · SIGTAP/CID e referências ilustrativos — confirme na competência vigente.</footer>
 
@@ -272,12 +325,12 @@ const CLIN_PADRAO={
   suely_rezende:{nome:"Suely Rezende",sistema:"Clínica nas Nuvens",integ:"wait",txt:"CNN requer onboarding. Por ora: modo ditado.",timbreCab:"",timbreRod:""},
   pro_imagem:{nome:"Pro Imagem",sistema:"G2i / Zurich",integ:"off",txt:"Sem API pública — fallback (guarda na Delfos).",timbreCab:"",timbreRod:""}
 };
-let clinicas=LS.get('delfos_clinicas',null); if(!clinicas){clinicas=JSON.parse(JSON.stringify(CLIN_PADRAO));LS.set('delfos_clinicas',clinicas);}
+let clinicas=LS.get('delfos_clinicas',null); if(!clinicas){clinicas={};LS.set('delfos_clinicas',clinicas);}  // usuário novo começa em branco
 function saveClin(){LS.set('delfos_clinicas',clinicas);}
 
 // ===== DADOS =====
-const EXAMES={pelvica:"Pélvica / Transvaginal",tireoide:"Tireoide com Doppler",mamas:"Mamas",abdomen:"Abdômen Total",obstetrica:"Obstétrica"};
-const TITULOS={pelvica:"ULTRASSONOGRAFIA PÉLVICA / TRANSVAGINAL",tireoide:"ULTRASSONOGRAFIA DE TIREOIDE COM DOPPLER",mamas:"ULTRASSONOGRAFIA DE MAMAS",abdomen:"ULTRASSONOGRAFIA DE ABDÔMEN TOTAL",obstetrica:"ULTRASSONOGRAFIA OBSTÉTRICA"};
+const EXAMES={pelvica:"Pélvica / Transvaginal",adenomiose:"Pélvica — Adenomiose",tireoide:"Tireoide com Doppler",mamas:"Mamas",axilar:"Região Axilar",abdomen:"Abdômen Total",obstetrica:"Obstétrica",hycosy:"Histerossonossalpingografia (HYCOSY)"};
+const TITULOS={pelvica:"ULTRASSONOGRAFIA PÉLVICA / TRANSVAGINAL",adenomiose:"ULTRASSONOGRAFIA PÉLVICA VIA TRANSVAGINAL",tireoide:"ULTRASSONOGRAFIA DE TIREOIDE COM DOPPLER",mamas:"ULTRASSONOGRAFIA DE MAMAS",axilar:"ULTRASSONOGRAFIA DE REGIÃO AXILAR",abdomen:"ULTRASSONOGRAFIA DE ABDÔMEN TOTAL",obstetrica:"ULTRASSONOGRAFIA OBSTÉTRICA",hycosy:"HISTEROSSONOSSALPINGOGRAFIA (HYCOSY)"};
 // Códigos SIGTAP (subgrupo 02.05.02) — pré-preenchidos e EDITÁVEIS; confirmar na competência vigente.
 // Catálogo SIGTAP (subgrupo 02.05.02) — editável; confirme na competência vigente.
 const SIGTAP_CAT=[
@@ -292,7 +345,7 @@ const SIGTAP_CAT=[
   {cod:"02.05.02.006-2",nome:"US Partes Moles / Doppler de estrutura"}
 ];
 // código default por tipo de exame (preenchimento automático)
-const SIGTAP_DEF={pelvica:"02.05.02.018-6",abdomen:"02.05.02.004-6",obstetrica:"02.05.02.015-1",tireoide:"02.05.02.013-5",mamas:"02.05.02.014-3"};
+const SIGTAP_DEF={pelvica:"02.05.02.018-6",adenomiose:"02.05.02.018-6",abdomen:"02.05.02.004-6",obstetrica:"02.05.02.015-1",tireoide:"02.05.02.013-5",mamas:"02.05.02.014-3",axilar:"02.05.02.006-2",hycosy:"02.05.02.018-6"};
 function onSigtap(){
   const sel=document.getElementById('sigtapSel'),cust=document.getElementById('sigtapCustom');let cod,nome;
   if(sel.value==='custom'){cust.classList.remove('hide');cod=cust.value.trim();nome='(personalizado)';}
@@ -352,6 +405,58 @@ CONCLUSÃO:
 ${d.concl||'Gestação tópica, feto único e vivo, com parâmetros dentro da normalidade.'}`
 };
 
+// ===== MODELOS DRA. CAROLINE (texto-base; corrija por voz/digitação) =====
+// Exames adicionais que não usam máscara dinâmica. Corpo apenas — título e bloco do
+// paciente são montados automaticamente em gerarDraft().
+const MODELOS_DRA={
+  axilar:`Exame realizado em modo bidimensional, equipamento dinâmico convexo, frequência de 5 a 12 MHz.
+
+REGIÃO AXILAR:
+Pele e tecido celular subcutâneo normais.
+Linfonodo de aspecto habitual.
+Ausência de imagens sugestivas de nódulos sólidos ou císticos.
+Planos musculares normais.
+
+CONCLUSÃO:
+Ecografia de axilas normal.`,
+  adenomiose:`Exame realizado em modo bidimensional, equipamento dinâmico convexo, frequência de 4 a 8 MHz.
+
+BEXIGA: Com paredes normais.
+ÚTERO:
+Posição: Em AVF, forma normal, centralizado, contornos regulares e miométrio de textura heterogênea. Presença de cistos miometriais, estrias miometriais hipoecoicas e linhas hiperecogênicas subendometriais estendendo-se do endométrio para o miométrio.
+Dimensões: ___ x ___ x ___ cm. Vol: ___ cm³.  (valor normal: 25 a 160 cm³)
+Endométrio: Mede ___ cm de espessura. Junção endométrio-miométrio irregular, sem limites precisos. Interrupção do halo subendometrial.
+Colo: ___.
+OVÁRIO DIREITO: Para-uterino, contornos regulares e parênquima homogêneo. Dimensões: ___ x ___ x ___ cm. Vol: ___ cm³.
+OVÁRIO ESQUERDO: Para-uterino, contornos regulares e parênquima homogêneo. Dimensões: ___ x ___ x ___ cm. Vol: ___ cm³.
+FUNDO DE SACO POSTERIOR: Livre.
+ECOGENICIDADE PÉLVICA: Normal.
+
+CONCLUSÃO:
+Sinais sugestivos de adenomiose.`,
+  hycosy:`DUM: ___      Dia do ciclo: ___
+Método contraceptivo: ___
+Indicação do exame: ___
+
+Exame realizado com transdutor endocavitário volumétrico de alta resolução e software específico para contraste ultrassonográfico.
+Passagem do espéculo vaginal e identificação do colo uterino. Não foi identificado corrimento patológico e/ou sangramento através do orifício externo do colo. Realizada assepsia da vagina com digliconato de clorexidina 2%.
+Introdução do cateter de histerossonografia 7F pelo orifício externo do colo sem dificuldades. Insuflação do balão com 1,0 ml de soro fisiológico para fixação do cateter no canal endocervical.
+Realizada histerossonossalpingografia (HYCOSY) multimodal utilizando os modos bidimensional, contraste, Doppler e ultrassonografia 3D/4D.
+
+TUBA UTERINA DIREITA:
+Posição: ___. Ecogenicidade da mucosa normal. Ausência de hidrossalpinge. Sem aderências com estruturas adjacentes. Passagem rápida do contraste, com saída para a cavidade envolvendo o ovário em forma de anel. Ausência de refluxo ao Doppler colorido. Sem retenção tardia do contraste. Fímbrias identificadas, de aspecto normal.
+
+TUBA UTERINA ESQUERDA:
+Posição: ___. Ecogenicidade da mucosa normal. Ausência de hidrossalpinge. Sem aderências com estruturas adjacentes. Passagem rápida do contraste, com saída para a cavidade envolvendo o ovário em forma de anel. Ausência de refluxo ao Doppler colorido. Sem retenção tardia do contraste. Fímbrias identificadas, de aspecto normal.
+
+DISPERSÃO DO CONTRASTE PELA CAVIDADE: Dispersão por toda a cavidade pélvica.
+CAVIDADE UTERINA: Ausência de sinequias e lesões focais.
+
+CONCLUSÃO:
+Tubas pérvias.
+Cavidade uterina de aspecto ecográfico normal.`
+};
+
 // ===== HELPERS =====
 function val(id){const e=document.getElementById(id);return e?e.value:'';}
 // dobra acentos e caixa, preservando o comprimento (índices alinham com o original)
@@ -370,8 +475,8 @@ function blocoPaciente(){
   if(cid)l+='   ·   CID: '+cid;
   return l;
 }
-function cabPadrao(c){const cl=clinicas[c];const img=cl.timbreCab?`<img src="${cl.timbreCab}"><br>`:'';return img+escHtml(cl.nome+'\n'+(cl.sistema?cl.sistema+' — ':'')+'[endereço/contato da clínica]').replace(/\n/g,'<br>');}
-function rodPadrao(c){const cl=clinicas[c];const img=cl.timbreRod?`<img src="${cl.timbreRod}"><br>`:'';return img+escHtml(val('medico')+'\nDocumento assinado digitalmente (VIDaaS/ICP-Brasil) — valide em validar.iti.gov.br').replace(/\n/g,'<br>');}
+function cabPadrao(c){const cl=clinicas[c];if(!cl)return escHtml('[Cadastre uma clínica em "Clínicas" para usar o timbre]');const img=cl.timbreCab?`<img src="${cl.timbreCab}"><br>`:'';return img+escHtml(cl.nome+'\n'+(cl.sistema?cl.sistema+' — ':'')+'[endereço/contato da clínica]').replace(/\n/g,'<br>');}
+function rodPadrao(c){const cl=clinicas[c];const img=(cl&&cl.timbreRod)?`<img src="${cl.timbreRod}"><br>`:'';return img+escHtml((val('medico')||'[Médico]')+'\nDocumento assinado digitalmente (VIDaaS/ICP-Brasil) — valide em validar.iti.gov.br').replace(/\n/g,'<br>');}
 
 // ===== ROTEADOR =====
 function go(v){
@@ -481,7 +586,7 @@ function normalizeNums(t){t=t.toLowerCase();Object.keys(NUM).forEach(w=>{t=t.rep
 let recognition=null, ouvindo=false, vozAlvo='ditado', micGranted=false;
 let dgSocket=null, dgRec=null, dgStream=null;
 let INTEG={deepgram:false,claude:false,vidaas:false};
-const API=(localStorage.getItem('delfos_api')||((location.origin&&location.origin.indexOf('http')===0)?location.origin:'http://localhost:8000'));
+const API=(function(){var o=(location.origin&&location.origin.indexOf('http')===0)?location.origin:'';var s=localStorage.getItem('delfos_api');if(s&&s.indexOf('localhost')>=0)s='';return o||s||'https://creative-profiterole-865da4.netlify.app';})();
 function vstatus(t){document.getElementById('vozStatus').textContent=t;}
 // handlers reutilizados por Web Speech e Deepgram
 function ditadoFinal(final){const low=fold(final);
@@ -520,26 +625,66 @@ function toggleVoz(alvo){
   else{ if(!startWebSpeech()){ouvindo=false;botoesVoz();return;} vstatus(micGranted?(alvo==='ditado'?'🎤 ditando...':'⌘ comando...'):'🎤 permita o microfone...'); }
 }
 function pararVoz(){ouvindo=false;botoesVoz();pararDeepgram();if(recognition){try{recognition.stop();}catch(_){}}}
-function botoesVoz(){document.getElementById('btnVoz').classList.toggle('rec',ouvindo&&vozAlvo==='ditado');document.getElementById('btnVozCmd').classList.toggle('rec',ouvindo&&vozAlvo==='comando');document.getElementById('btnVoz').textContent=(ouvindo&&vozAlvo==='ditado')?'⏹️ Parar':'🎤 Falar medidas';document.getElementById('btnVozCmd').textContent=(ouvindo&&vozAlvo==='comando')?'⏹️ Parar':'🎤 Falar';}
+function botoesVoz(){document.getElementById('btnVoz').classList.toggle('rec',ouvindo&&vozAlvo==='ditado');document.getElementById('btnVozCmd').classList.toggle('rec',ouvindo&&vozAlvo==='comando');document.getElementById('btnVoz').innerHTML=(ouvindo&&vozAlvo==='ditado')?'<i class="ti ti-player-stop"></i> Parar':'<i class="ti ti-microphone"></i> Falar medidas';document.getElementById('btnVozCmd').innerHTML=(ouvindo&&vozAlvo==='comando')?'<i class="ti ti-player-stop"></i> Parar':'<i class="ti ti-microphone"></i> Falar';}
 // status das integrações + estruturação por IA + assinatura VIDaaS
 async function carregarIntegracoes(){
   try{const r=await fetch(API+'/integracoes/status');if(r.ok)INTEG=await r.json();}catch(_){}
   const b=document.getElementById('btnIA');if(b){b.title=INTEG.claude?'Estruturar o ditado com IA (Claude)':'Requer ANTHROPIC_API_KEY no servidor';}
   const dg=document.getElementById('btnVoz');if(dg&&INTEG.deepgram)dg.textContent='🎤 Falar (Deepgram)';
 }
+// ===== CLASSIFICADORES (TI-RADS / BI-RADS) — cálculo obrigatório, inserir opcional =====
+function renderClassificador(){
+  const box=document.getElementById('classificador'); if(!box)return; const ex=estado.ex;
+  if(ex==='tireoide'){
+    box.innerHTML='<h2 style="margin-top:18px">Classificação TI-RADS (ACR)</h2>'+
+      '<p class="muted">Descritores do nódulo — o sistema calcula. Inserir no laudo é opcional.</p>'+
+      '<label>Composição</label><select id="ti_comp"><option value="0">Cístico/espongiforme (0)</option><option value="1">Misto (1)</option><option value="2" selected>Sólido (2)</option></select>'+
+      '<label>Ecogenicidade</label><select id="ti_eco"><option value="0">Anecoico (0)</option><option value="1">Hiper/Isoecoico (1)</option><option value="2" selected>Hipoecoico (2)</option><option value="3">Muito hipoecoico (3)</option></select>'+
+      '<label>Forma</label><select id="ti_forma"><option value="0" selected>Mais largo que alto (0)</option><option value="3">Mais alto que largo (3)</option></select>'+
+      '<label>Margem</label><select id="ti_marg"><option value="0" selected>Lisa/mal definida (0)</option><option value="2">Lobulada/irregular (2)</option><option value="3">Extensão extratireoidiana (3)</option></select>'+
+      '<label>Focos ecogênicos</label><select id="ti_foco"><option value="0" selected>Nenhum/cauda de cometa (0)</option><option value="1">Macrocalcificação (1)</option><option value="2">Calcificação periférica (2)</option><option value="3">Focos puntiformes (3)</option></select>'+
+      '<label>Maior diâmetro (cm)</label><input id="ti_diam" type="number" step="0.1" placeholder="ex.: 1.2">'+
+      '<div class="row" style="margin-top:8px"><button class="act btn-primary" onclick="calcTirads()">Calcular TI-RADS</button></div>'+
+      '<div id="cl_res" style="margin-top:8px"></div>';
+  } else if(ex==='mamas'){
+    box.innerHTML='<h2 style="margin-top:18px">Classificação BI-RADS (ACR)</h2><label>Categoria</label>'+
+      '<select id="bi_cat" onchange="calcBirads()"><option value="">— selecione —</option>'+[0,1,2,3,4,5,6].map(c=>'<option value="'+c+'">'+c+' — '+biradsTab[c][0]+'</option>').join('')+'</select>'+
+      '<div id="cl_res" style="margin-top:8px"></div>';
+  } else { box.innerHTML='<p class="muted" style="margin-top:14px">Sem classificador específico para este exame; use os cálculos de medida/volume acima.</p>'; }
+}
+function condutaTirads(n,d){if(n==='TR1'||n==='TR2')return 'sem PAAF, sem seguimento';if(n==='TR3')return d>=2.5?'PAAF':d>=1.5?'seguimento':'sem ação';if(n==='TR4')return d>=1.5?'PAAF':d>=1.0?'seguimento':'sem ação';return d>=1.0?'PAAF':d>=0.5?'seguimento':'sem ação';}
+function calcTirads(){
+  const v=id=>+(document.getElementById(id).value||0);
+  const pts=v('ti_comp')+v('ti_eco')+v('ti_forma')+v('ti_marg')+v('ti_foco');
+  let n,f; if(pts===0){n='TR1';f='Benigno';}else if(pts<=2){n='TR2';f='Não suspeito';}else if(pts===3){n='TR3';f='Levemente suspeito';}else if(pts<=6){n='TR4';f='Moderadamente suspeito';}else{n='TR5';f='Altamente suspeito';}
+  const d=parseFloat((document.getElementById('ti_diam').value||'').replace(',','.'))||0;
+  const cond=condutaTirads(n,d);
+  estado.calcs['TI-RADS']=n+' ('+pts+' pts) · '+cond; renderCalc();
+  const txt='Nódulo tireoidiano: '+n+' ('+f+', '+pts+' pontos)'+(d?', maior diâmetro '+String(d).replace('.',',')+' cm':'')+'. Conduta: '+cond+'.';
+  document.getElementById('cl_res').innerHTML='<div class="status puxado"><b>'+n+'</b> · '+f+' · '+pts+' pts<br>Conduta: '+cond+'</div><button class="act btn-amber" style="margin-top:6px;width:100%" data-t="'+txt.replace(/"/g,'&quot;')+'" onclick="inserirClassificacao(this.dataset.t)">＋ Inserir no laudo</button>';
+}
+function calcBirads(){
+  const c=document.getElementById('bi_cat').value, box=document.getElementById('cl_res');
+  if(c===''){box.innerHTML='';delete estado.calcs['BI-RADS'];renderCalc();return;}
+  const t=biradsTab[+c]; estado.calcs['BI-RADS']=c+' · '+t[1]; renderCalc();
+  const txt='Classificação BI-RADS '+c+' ('+t[0]+'). Conduta: '+t[1]+'.';
+  box.innerHTML='<div class="status puxado"><b>BI-RADS '+c+'</b> — '+t[0]+'<br>Conduta: '+t[1]+'</div><button class="act btn-amber" style="margin-top:6px;width:100%" data-t="'+txt.replace(/"/g,'&quot;')+'" onclick="inserirClassificacao(this.dataset.t)">＋ Inserir no laudo</button>';
+}
+function inserirClassificacao(txt){const el=document.getElementById('laudo');let t=el.textContent;pushHist();t=/\n\nCONCLUS/i.test(t)?t.replace(/\n\nCONCLUS/i,'\n'+txt+'\n\nCONCLUS'):t+'\n'+txt;el.textContent=t;document.getElementById('readback').textContent='＋ Classificação inserida no laudo.';}
+
 async function estruturarIA(){
   const ex=estado.ex, transc=val('entrada').trim();
-  if(!INTEG.claude){popup('IA não configurada',['Defina ANTHROPIC_API_KEY no servidor para estruturar com Claude. Por ora, use Incorporar/Normalidade.'],true);return;}
-  if(!transc){document.getElementById('readback').textContent='Dite ou digite os achados antes de estruturar com IA.';return;}
+  if(!transc){popup('Sem ditado',['Dite ou digite os achados antes de estruturar com IA.'],true);document.getElementById('readback').textContent='Dite os achados primeiro.';return;}
+  if(!INTEG.claude){popup('IA não configurada',['Defina ANTHROPIC_API_KEY no servidor para usar o Claude. Por ora, use Incorporar/Normalidade e os classificadores.'],true);return;}
   document.getElementById('readback').textContent='✨ Estruturando com IA...';
   try{
     const mascara=TITULOS[ex]+'\n\n'+MASCARAS[ex]({pac:val('paciente')});
     const r=await fetch(API+'/ia/estruturar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo_exame:ex,transcricao:transc,mascara,valores_calculados:estado.calcs})});
     const j=await r.json().catch(()=>({}));
-    if(!r.ok){document.getElementById('readback').textContent=j.detail||'Falha na IA.';return;}
+    if(!r.ok){popup('Falha na IA',[j.detail||'Erro ao estruturar.'],true);document.getElementById('readback').textContent=j.detail||'Falha na IA.';return;}
     pushHist();document.getElementById('laudo').textContent=TITULOS[ex]+'\n\n'+blocoPaciente()+'\n\n'+j.laudo;
     document.getElementById('readback').textContent='✨ Laudo estruturado pela IA (revise antes de assinar).';
-  }catch(err){document.getElementById('readback').textContent='Não foi possível conectar ao servidor de IA.';}
+  }catch(err){popup('Sem conexão',['Não foi possível conectar ao servidor de IA.'],true);document.getElementById('readback').textContent='Sem conexão com a IA.';}
 }
 
 // ===== FORMATAÇÃO =====
@@ -556,10 +701,11 @@ function onClinica(){const c=val('clinica'),box=document.getElementById('integra
 function trocarExame(){estado.ex=val('exame');estado.dados={};estado.calcs={};document.getElementById('entrada').value='';
   document.getElementById('upExameNome').textContent=EXAMES[estado.ex];
   const def=SIGTAP_DEF[estado.ex]||'';document.getElementById('sigtapSel').value=def;onSigtap();
-  renderUploads();gerarDraft();renderCalc();}
+  renderUploads();gerarDraft();renderCalc();renderClassificador();}
 function gerarDraft(){const ex=estado.ex,clinica=val('clinica'),key=clinica+'|'+ex,d={pac:val('paciente'),...estado.dados};
   let corpo;
   if(customMascaras[key]){corpo=customMascaras[key].replace(/\[PACIENTE\]/g,d.pac).replace(/\[SIGTAP\]/g,val('sigtapCod')).replace(/\[CID\]/g,val('cid'));}
+  else if(MODELOS_DRA[ex]){corpo=TITULOS[ex]+'\n\n'+blocoPaciente()+'\n\n'+MODELOS_DRA[ex];}
   else{corpo=TITULOS[ex]+'\n\n'+blocoPaciente()+'\n\n'+MASCARAS[ex](d);}
   document.getElementById('laudo').textContent=corpo;
   document.getElementById('cabecalho').innerHTML=(cabRod[clinica]&&cabRod[clinica].cab)||cabPadrao(clinica);
@@ -656,7 +802,9 @@ function persistCabRod(){const c=val('clinica');cabRod[c]={cab:document.getEleme
 
 // ===== SALVAR =====
 function docHTML(){const cab=document.getElementById('cabecalho').innerHTML,corpo=document.getElementById('laudo').innerHTML,rod=document.getElementById('rodape').innerHTML;
-  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&display=swap" rel="stylesheet"><style>@page{size:A4;margin:2cm}body{font-family:Arial}.cab{border-bottom:1px solid #999;padding-bottom:8px;margin-bottom:14px}.cab img,.rod img{max-height:80px}.rod{border-top:1px solid #999;padding-top:8px;margin-top:24px;font-size:12px}.corpo{white-space:pre-wrap;font-family:'Lora',Georgia,serif;font-size:13px;line-height:1.7}</style></head><body><div class="cab">${cab}</div><div class="corpo">${corpo}</div><div class="rod">${rod}</div></body></html>`;}
+  const sz=LS.get('delfos_psize','13px'),mg=LS.get('delfos_pmargin','2cm');
+  const fonte=document.getElementById('pref_fonte')&&document.getElementById('pref_fonte').value==='corporativo'?"'Inter',Arial,sans-serif":"'Lora','Source Serif 4',Georgia,serif";
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&family=Source+Serif+4:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet"><style>@page{size:A4;margin:${mg}}body{font-family:Arial}.cab{border-bottom:1px solid #999;padding-bottom:8px;margin-bottom:14px}.cab img,.rod img{max-height:80px}.rod{border-top:1px solid #999;padding-top:8px;margin-top:24px;font-size:12px}.corpo{white-space:pre-wrap;font-family:${fonte};font-size:${sz};line-height:1.75}</style></head><body><div class="cab">${cab}</div><div class="corpo">${corpo}</div><div class="rod">${rod}</div></body></html>`;}
 async function salvarLaudo(){const paciente=val('paciente'),clinica=val('clinica');
   const reg={id:Date.now(),data:new Date().toLocaleDateString('pt-BR'),dataISO:new Date().toISOString().slice(0,10),clinica,paciente,exame:estado.ex,sigtap:val('sigtapCod'),cid:val('cid'),cab:document.getElementById('cabecalho').innerHTML,corpo:document.getElementById('laudo').textContent,rod:document.getElementById('rodape').innerHTML};
   laudosSalvos.unshift(reg);LS.set('delfos_laudos',laudosSalvos);
@@ -667,8 +815,57 @@ function imprimirA4(){document.getElementById('printStatus').textContent='Abrind
 function imprimirTermica(){const ps=document.getElementById('printStatus');if(window.qz&&window.qz.websocket){ps.textContent='Conectando ao QZ Tray...';qz.websocket.connect().then(()=>qz.printers.getDefault()).then(p=>{ps.textContent='Térmica conectada: '+p+'.';}).catch(()=>{ps.textContent='QZ Tray não respondeu. Abra o app QZ Tray.';});}else{ps.innerHTML='Térmica (cupom/etiqueta) requer o app <b>QZ Tray</b> (qz.io). Senão use Imprimir A4.';}}
 
 // ===== INIT =====
-popSelects(); onClinica(); renderPainel(); carregarIntegracoes();
+// ===== SESSÃO / PERFIL / SEGURANÇA =====
+let USUARIO={nome:'',email:'',crm:''};
+function gateAuth(){
+  const tok=localStorage.getItem('delfos_token');
+  if(!tok){location.replace('login.html');return;}
+  fetch(API+'/auth/me',{headers:{Authorization:'Bearer '+tok}})
+    .then(r=>{if(!r.ok)throw 0;return r.json();})
+    .then(u=>setUsuario(u))
+    .catch(()=>{localStorage.removeItem('delfos_token');location.replace('login.html');});
+}
+function setUsuario(u){USUARIO=u||{};
+  document.getElementById('userName').textContent=u.nome||'Médico(a)';
+  document.getElementById('userAv').textContent=((u.nome||'M').trim()[0]||'M').toUpperCase();
+  const med=document.getElementById('medico'); if(med){med.value=(u.nome||'')+(u.crm?' — '+(u.crm.indexOf('CRM')===0?u.crm:'CRM '+u.crm):'');}
+  gerarDraft && val('clinica') && gerarDraft();
+}
+function logout(){localStorage.removeItem('delfos_token');localStorage.removeItem('delfos_nome');location.replace('login.html');}
+function novaClinica(){go('clinicas');setTimeout(()=>{const e=document.getElementById('novaClin');if(e){e.focus();e.scrollIntoView({block:'center'});}},120);}
+function abrirPerfil(){
+  document.getElementById('perfilNome').textContent=USUARIO.nome||'—';
+  document.getElementById('perfilEmail').textContent=USUARIO.email||'—';
+  document.getElementById('perfilCrm').textContent=USUARIO.crm||'—';
+  document.getElementById('pf_msg').textContent='';
+  document.getElementById('perfilModal').style.display='flex';
+}
+function fecharPerfil(){document.getElementById('perfilModal').style.display='none';}
+async function alterarSenha(){
+  const a=val('pf_atual'),n=val('pf_nova'),n2=val('pf_nova2'),msg=document.getElementById('pf_msg');
+  if(!a){msg.style.color='var(--err)';msg.textContent='Informe a senha atual.';return;}
+  if(n.length<8){msg.style.color='var(--err)';msg.textContent='Nova senha: mínimo 8 caracteres.';return;}
+  if(n!==n2){msg.style.color='var(--err)';msg.textContent='As novas senhas não conferem.';return;}
+  msg.style.color='var(--mut)';msg.textContent='Alterando...';
+  try{
+    const r=await fetch(API+'/auth/alterar-senha',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('delfos_token')},body:JSON.stringify({atual:a,nova:n})});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok){msg.style.color='var(--ok)';msg.textContent='Senha alterada com sucesso.';['pf_atual','pf_nova','pf_nova2'].forEach(id=>document.getElementById(id).value='');}
+    else{msg.style.color='var(--err)';msg.textContent=j.detail||'Falha ao alterar.';}
+  }catch(e){msg.style.color='var(--err)';msg.textContent='Erro de conexão.';}
+}
+function aplicarPaleta(v){if(v)document.documentElement.setAttribute('data-palette',v);else document.documentElement.removeAttribute('data-palette');LS.set('delfos_paleta',v||'');}
+function aplicarFonte(v){if(v)document.documentElement.setAttribute('data-fonte',v);else document.documentElement.removeAttribute('data-fonte');LS.set('delfos_fonte',v||'');}
+function aplicarImpressao(){const sz=val('pref_psize')||'13px',mg=val('pref_pmargin')||'2cm';document.documentElement.style.setProperty('--laudo-print-size',sz);document.documentElement.style.setProperty('--laudo-print-margin',mg);LS.set('delfos_psize',sz);LS.set('delfos_pmargin',mg);}
+function aplicarPreferencias(){
+  const pal=LS.get('delfos_paleta',''),fon=LS.get('delfos_fonte',''),sz=LS.get('delfos_psize','13px'),mg=LS.get('delfos_pmargin','2cm');
+  if(pal){document.documentElement.setAttribute('data-palette',pal);const e=document.getElementById('pref_paleta');if(e)e.value=pal;}
+  if(fon){document.documentElement.setAttribute('data-fonte',fon);const e=document.getElementById('pref_fonte');if(e)e.value=fon;}
+  document.documentElement.style.setProperty('--laudo-print-size',sz);document.documentElement.style.setProperty('--laudo-print-margin',mg);
+  const a=document.getElementById('pref_psize');if(a)a.value=sz;const b=document.getElementById('pref_pmargin');if(b)b.value=mg;
+}
+gateAuth(); aplicarPreferencias(); popSelects(); onClinica(); renderPainel(); carregarIntegracoes(); renderClassificador();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.js" defer></script>
 </body>
-</html>
+</html> 

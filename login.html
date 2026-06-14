@@ -113,7 +113,7 @@
   </main>
 
 <script>
-  const API=(localStorage.getItem('delfos_api')||((location.origin&&location.origin.indexOf('http')===0)?location.origin:'http://localhost:8000'));
+  const API=(function(){var o=(location.origin&&location.origin.indexOf('http')===0)?location.origin:'';var s=localStorage.getItem('delfos_api');if(s&&s.indexOf('localhost')>=0)s='';return o||s||'https://creative-profiterole-865da4.netlify.app';})();
   function verSenha(btn){const i=document.getElementById('senha');const p=i.type==='password';i.type=p?'text':'password';btn.textContent=p?'ocultar':'mostrar';}
   function showErr(m){const e=document.getElementById('erro');e.textContent=m;e.style.display='block';}
   async function entrar(ev){
@@ -125,12 +125,16 @@
       const r=await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,senha})});
       const j=await r.json().catch(()=>({}));
       if(!r.ok){showErr(j.detail||'E-mail ou senha incorretos.');return;}
+      // guarda a sessão (token assinado) — o dashboard exige isso para abrir
+      localStorage.setItem('delfos_token', j.token||'');
+      localStorage.setItem('delfos_nome', j.nome||'');
       window.location.href='index.html';
     }catch(err){showErr('Não foi possível conectar ao servidor ('+API+'). Verifique se o backend está rodando.');}
   }
   function entrarCert(){
-    // Em produção: inicia o fluxo OAuth/PKCE da VIDaaS (push/QR) — o mesmo certificado usado para assinar.
-    window.location.href='index.html';
+    // SEGURANÇA: NÃO concede acesso sem autenticação. O login por certificado digital (VIDaaS/ICP-Brasil)
+    // será um fluxo OAuth2+PKCE real (em integração). Por ora, use e-mail e senha.
+    showErr('Login por certificado digital (VIDaaS/gov.br) está em integração e será liberado em breve. Por enquanto, entre com e-mail e senha.');
   }
 </script>
 </body>
