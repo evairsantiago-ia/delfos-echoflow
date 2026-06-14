@@ -6,7 +6,7 @@ const json=(o,s=200)=>new Response(JSON.stringify(o),{status:s,headers:{'content
 const SECRET=E.AUTH_SECRET||'dev';
 const hashSenha=(p,salt)=>{salt=salt||crypto.randomBytes(16).toString('hex');return salt+'$'+crypto.pbkdf2Sync(String(p),salt,200000,32,'sha256').toString('base64');};
 const gerarToken=(d,ttl=86400)=>{const raw=Buffer.from(JSON.stringify({d,exp:Math.floor(Date.now()/1000)+ttl})).toString('base64url');return raw+'.'+crypto.createHmac('sha256',SECRET).update(raw).digest('base64url');};
-const store=()=>getStore('delfos-users');
+const store=()=>getStore({name:'delfos-users',consistency:'strong'});
 const getUser=async e=>{try{return await store().get(e,{type:'json'});}catch{return null;}};
 const setUser=async(e,d)=>{await store().setJSON(e,d);};
 const smtpOk=()=>!!(E.SMTP_HOST&&E.SMTP_USER&&E.SMTP_PASS);

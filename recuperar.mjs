@@ -12,7 +12,7 @@ export default async (req)=>{
   let b={};try{b=await req.json();}catch{}
   const email=(b.email||'').toLowerCase().trim();
   const resp={ok:true,mensagem:'Se houver uma conta para este e-mail, enviamos o link de redefinição.'};
-  const u=await getStore('delfos-users').get(email,{type:'json'}).catch(()=>null);
+  const u=await getStore({name:'delfos-users',consistency:'strong'}).get(email,{type:'json'}).catch(()=>null);
   if(u){const link=(E.APP_BASE_URL||E.URL||'')+'/redefinir.html?token='+gerarToken({email,acao:'redefinir'},3600);
     if(smtpOk())await enviar(email,'Redefinir senha · Delfos EchoFlow','<p>Redefina sua senha:</p><p><a href="'+link+'">Redefinir senha</a></p><p>'+link+'</p>');
     if(!smtpOk())resp.dev_link=link;}

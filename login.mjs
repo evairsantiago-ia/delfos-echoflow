@@ -6,7 +6,7 @@ const verifica=(p,arm)=>{try{const s=String(arm).split('$')[0];const c=hashSenha
 export default async (req)=>{
   if(req.method!=='POST')return json({detail:'Método inválido'},405);
   let b={};try{b=await req.json();}catch{}
-  const u=await getStore('delfos-users').get((b.email||'').toLowerCase().trim(),{type:'json'}).catch(()=>null);
+  const u=await getStore({name:'delfos-users',consistency:'strong'}).get((b.email||'').toLowerCase().trim(),{type:'json'}).catch(()=>null);
   if(!u||!verifica(b.senha,u.senha))return json({detail:'E-mail ou senha incorretos.'},401);
   if(!u.ativo)return json({detail:'Confirme seu e-mail antes de entrar.'},403);
   return json({ok:true,nome:u.nome});
