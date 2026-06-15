@@ -235,7 +235,8 @@
         <div class="row"><button class="act btn-primary" onclick="executarComando()">Aplicar no laudo</button><button class="act btn-ghost" onclick="undo()"><i class="ti ti-arrow-back-up"></i> Desfazer</button></div>
         <div id="readback" class="readback"></div>
         <h2 style="margin-top:18px">5 · Finalizar</h2>
-        <div class="row"><button class="act btn-amber" onclick="assinar()"><i class="ti ti-signature"></i> Assinar</button><button class="act btn-primary" onclick="salvarLaudo()"><i class="ti ti-device-floppy"></i> Salvar…</button><button class="act btn-ghost" onclick="imprimirA4()"><i class="ti ti-printer"></i> A4</button></div>
+        <div class="row"><button class="act btn-amber" onclick="assinar()"><i class="ti ti-signature"></i> Assinar</button><button class="act btn-primary" onclick="salvarLaudo()"><i class="ti ti-device-floppy"></i> Salvar…</button><button class="act btn-ghost" onclick="imprimirA4()"><i class="ti ti-printer"></i> A4</button><button class="act btn-ghost" onclick="enviarAoDrive()"><i class="ti ti-brand-google-drive"></i> Enviar ao Drive</button></div>
+        <div id="driveStatus" class="muted" style="margin-top:6px"></div>
         <div id="assinaturaBox" style="margin-top:10px"></div>
         <div id="printStatus" class="muted" style="margin-top:8px"></div>
         <details style="margin-top:10px"><summary class="muted"><i class="ti ti-receipt"></i> Imprimir etiqueta/cupom (opcional)</summary><p class="muted" style="margin-top:6px">Para impressora <b>térmica</b> (cupom/etiqueta), não A4. Requer o app <b>QZ Tray</b>.</p><button class="act btn-ghost" onclick="imprimirTermica()">Conectar térmica</button></details>
@@ -964,6 +965,54 @@ async function salvarLaudo(){const paciente=val('paciente'),clinica=val('clinica
   ps.innerHTML+='<br><span class="muted">Com integração ativa, o laudo também será enviado como nova consulta ao prontuário.</span>';}
 function imprimirA4(){document.getElementById('printStatus').textContent='Abrindo o diálogo de impressão (escolha a impressora)...';setTimeout(()=>window.print(),150);}
 function imprimirTermica(){const ps=document.getElementById('printStatus');if(window.qz&&window.qz.websocket){ps.textContent='Conectando ao QZ Tray...';qz.websocket.connect().then(()=>qz.printers.getDefault()).then(p=>{ps.textContent='Térmica conectada: '+p+'.';}).catch(()=>{ps.textContent='QZ Tray não respondeu. Abra o app QZ Tray.';});}else{ps.innerHTML='Térmica (cupom/etiqueta) requer o app <b>QZ Tray</b> (qz.io). Senão use Imprimir A4.';}}
+
+// ===== GOOGLE DRIVE (escopo drive.file: o app só acessa os arquivos que cria) =====
+let _gisLoaded=false,_gdToken=null,_gdExp=0;
+// Client ID OAuth do APP (público; criado 1x na conta matriz). Vale para todos os médicos.
+const GDRIVE_CLIENT='388062944821-m6150hrqel10ttsoqrpgut9almqb6n0r.apps.googleusercontent.com';
+function dStatus(t){const e=document.getElementById('driveStatus');if(e)e.textContent=t;}
+function gdClientId(){return GDRIVE_CLIENT||localStorage.getItem('delfos_gdrive_client')||'';}
+function loadGIS(){return new Promise((res,rej)=>{if(_gisLoaded&&window.google&&google.accounts&&google.accounts.oauth2)return res();const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.async=true;s.onload=()=>{_gisLoaded=true;res();};s.onerror=()=>rej(new Error('não carregou o Google'));document.head.appendChild(s);});}
+async function gdToken(){
+  let cid=gdClientId();
+  if(!cid){cid=(prompt('Configuração única — cole o Google OAuth Client ID (termina em .apps.googleusercontent.com):')||'').trim();if(!cid)throw new Error('Client ID não informado');localStorage.setItem('delfos_gdrive_client',cid);}
+  await loadGIS();
+  if(_gdToken&&Date.now()<_gdExp-60000)return _gdToken;
+  return new Promise((res,rej)=>{
+    const tc=google.accounts.oauth2.initTokenClient({client_id:cid,scope:'https://www.googleapis.com/auth/drive.file',callback:(r)=>{if(r&&r.access_token){_gdToken=r.access_token;_gdExp=Date.now()+((r.expires_in||3500)*1000);res(_gdToken);}else rej(new Error('autorização negada'));}});
+    tc.requestAccessToken({prompt:''});
+  });
+}
+async function gdFolder(token){
+  const q=encodeURIComponent("mimeType='application/vnd.google-apps.folder' and name='Delfos EchoFlow' and trashed=false");
+  const r=await fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)',{headers:{Authorization:'Bearer '+token}});
+  const j=await r.json(); if(j.files&&j.files.length)return j.files[0].id;
+  const c=await fetch('https://www.googleapis.com/drive/v3/files',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({name:'Delfos EchoFlow',mimeType:'application/vnd.google-apps.folder'})});
+  return (await c.json()).id;
+}
+function laudoWordBlob(){
+  const cab=document.getElementById('cabecalho').innerHTML,corpo='<div style="white-space:pre-wrap">'+escHtml(document.getElementById('laudo').textContent)+'</div>',rod=document.getElementById('rodape').innerHTML;
+  const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"></head><body style="font-family:Georgia,serif;font-size:12pt;line-height:1.5">'+cab+'<hr>'+corpo+'<div style="margin-top:24px">'+rod+'</div></body></html>';
+  return new Blob(['﻿',html],{type:'application/msword'});
+}
+async function enviarAoDrive(){
+  try{
+    if(document.getElementById('laudo').textContent.trim().length<10){dStatus('Gere o laudo antes de enviar.');return;}
+    dStatus('Conectando ao Google Drive…');
+    const token=await gdToken();
+    dStatus('Enviando…');
+    const folder=await gdFolder(token);
+    const pac=val('paciente')||'laudo';
+    const nome=('laudo_'+pac+'_'+new Date().toISOString().slice(0,10)).replace(/[^\w]+/g,'_')+'.doc';
+    const form=new FormData();
+    form.append('metadata',new Blob([JSON.stringify({name:nome,mimeType:'application/msword',parents:[folder]})],{type:'application/json'}));
+    form.append('file',laudoWordBlob());
+    const up=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',{method:'POST',headers:{Authorization:'Bearer '+token},body:form});
+    const j=await up.json();
+    if(j.id){dStatus('✓ Enviado ao Google Drive — pasta "Delfos EchoFlow".');}
+    else dStatus('Falha ao enviar'+(j.error&&j.error.message?': '+j.error.message:'.'));
+  }catch(e){dStatus('Não foi possível enviar ao Drive: '+e.message);}
+}
 
 // ===== INIT =====
 // ===== SESSÃO / PERFIL / SEGURANÇA =====
