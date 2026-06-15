@@ -134,13 +134,10 @@
       const r=await fetch(API+'/auth/cadastro',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(lastPayload)});
       const j=await r.json().catch(()=>({}));
       if(!r.ok){showErr(j.detail||'Não foi possível concluir o cadastro.');return;}
-      devLink=j.dev_link||'';
-      document.getElementById('emailDest').textContent=email;
-      document.getElementById('boxForm').style.display='none';
-      document.getElementById('boxCheck').style.display='block';
-      const bc=document.getElementById('btnConf');
-      if(devLink){bc.style.display='flex';bc.textContent='Abrir link de confirmação (SMTP não configurado)';}
-      else{bc.style.display='none';}
+      // Conta criada já ativa — vai direto para o login.
+      try{sessionStorage.setItem('delfos_email_novo',email);}catch(_){}
+      alert('Conta criada e já ativada! Entre com seu e-mail e senha.');
+      window.location.href='login.html';
     }catch(err){showErr('Não foi possível conectar ao servidor ('+API+'). Verifique se o backend está rodando.');}
   }
   async function reenviar(){

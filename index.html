@@ -150,10 +150,9 @@
   <section id="view-painel" class="enter">
     <div class="hero">
       <svg class="orbit" viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="78" stroke="#7fb6c0" stroke-width="1" stroke-dasharray="3 6"/><circle cx="100" cy="100" r="52" stroke="#7fb6c0" stroke-width="1" stroke-dasharray="3 6"/><circle cx="100" cy="22" r="4" fill="#e6a23c"/><circle cx="178" cy="100" r="4" fill="#7fe0d0"/><circle cx="100" cy="178" r="4" fill="#9fc8d0"/><circle cx="22" cy="100" r="4" fill="#e6a23c"/><circle cx="100" cy="100" r="9" fill="#e6a23c"/></svg>
-      <h1>Fala → laudo → <span>assina</span>. Sem travar, sem créditos.</h1>
-      <p>Laudo de ultrassom ditado por voz, com cálculos automáticos, correção em tempo real e assinatura ICP-Brasil. O médico sempre no controle.</p>
+      <h1>Bem-vindo(a) à <span>Delfos EchoFlow</span></h1>
+      <p>Selecione uma ação para começar.</p>
       <div class="row"><button class="act big white" onclick="go('laudo')"><i class="ti ti-plus"></i> Novo laudo</button><button class="act big white" onclick="novaClinica()"><i class="ti ti-plus"></i> Nova clínica</button><button class="act big amber" onclick="go('arquivo')">▤ Abrir arquivo</button></div>
-      <div class="chips"><span class="chip">Laudos ilimitados</span><span class="chip">Assinatura VIDaaS / ICP-Brasil</span><span class="chip">SIGTAP + CID</span><span class="chip">pt-BR nativo</span></div>
     </div>
     <div class="grid-2">
       <div class="card"><h2>Status das integrações de prontuário</h2><p class="muted" style="margin-bottom:8px">Entram por último — o laudo nunca para por falta delas.</p><table><tbody id="painel-integr"></tbody></table></div>
@@ -246,7 +245,7 @@
       <h2>Arquivo — laudos salvos</h2>
       <div class="row" style="margin-bottom:14px">
         <select id="f-clinica" style="max-width:220px" onchange="renderArquivo()"><option value="">Todas as clínicas</option></select>
-        <input id="f-busca" placeholder="<i class="ti ti-search"></i> Nome do paciente" style="max-width:230px" oninput="renderArquivo()">
+        <input id="f-busca" placeholder="Buscar por nome do paciente" style="max-width:230px" oninput="renderArquivo()">
         <input id="f-data" type="date" style="max-width:170px" onchange="renderArquivo()" title="Filtrar por data">
         <button class="act btn-ghost" onclick="limparFiltros()">Limpar</button>
         <span class="muted" id="arq-conta" style="align-self:center"></span>
@@ -312,7 +311,7 @@
   </div>
 </div>
 <div id="toast"></div>
-<footer>Delfos EchoFlow · protótipo funcional · SIGTAP/CID e referências ilustrativos — confirme na competência vigente.</footer>
+<footer>Delfos EchoFlow · SIGTAP/CID e referências ilustrativos — confirme na competência vigente.</footer>
 
 <script>
 // ===== PERSISTÊNCIA =====
@@ -826,6 +825,17 @@ function gateAuth(){
     .catch(()=>{localStorage.removeItem('delfos_token');location.replace('login.html');});
 }
 function setUsuario(u){USUARIO=u||{};
+  // Isola os dados locais por conta: se o dono mudou, zera clínicas/laudos/máscaras/timbres.
+  try{const dono=localStorage.getItem('delfos_owner');
+    if(u&&u.email&&dono!==u.email){
+      ['delfos_clinicas','delfos_laudos','delfos_masks','delfos_cabrod'].forEach(k=>localStorage.removeItem(k));
+      clinicas={};laudosSalvos=[];customMascaras={};cabRod={};
+      LS.set('delfos_clinicas',clinicas);
+      localStorage.setItem('delfos_owner',u.email);
+      popSelects();renderPainel();
+      if(!document.getElementById('view-arquivo').classList.contains('hide'))renderArquivo();
+    }
+  }catch(_){}
   document.getElementById('userName').textContent=u.nome||'Médico(a)';
   document.getElementById('userAv').textContent=((u.nome||'M').trim()[0]||'M').toUpperCase();
   const med=document.getElementById('medico'); if(med){med.value=(u.nome||'')+(u.crm?' — '+(u.crm.indexOf('CRM')===0?u.crm:'CRM '+u.crm):'');}

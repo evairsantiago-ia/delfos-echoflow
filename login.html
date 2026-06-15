@@ -101,13 +101,11 @@
         </div>
         <button type="submit" class="btn btn-primary">Entrar →</button>
       </form>
-      <button class="btn btn-cert" onclick="entrarCert()">🪪 Entrar com certificado digital (VIDaaS / gov.br)</button>
       <div class="divider">novo por aqui?</div>
       <div class="authbtns">
         <a class="btn btn-soft" href="cadastro.html">＋ Criar conta</a>
         <a class="btn btn-soft" href="recuperar.html">🔑 Recuperar senha</a>
       </div>
-      <p class="note">A autenticação real (senha protegida, verificação em duas etapas e trilha de auditoria) roda no backend, em conformidade com a LGPD — nenhuma senha é processada nesta demonstração.</p>
       <div class="signup"><a href="termos.html">Termos de Uso</a> · <a href="privacidade.html">Política de Privacidade (LGPD)</a></div>
     </div>
   </main>
@@ -131,12 +129,8 @@
       window.location.href='index.html';
     }catch(err){showErr('Não foi possível conectar ao servidor ('+API+'). Verifique se o backend está rodando.');}
   }
-  function entrarCert(){
-    // SEGURANÇA: NÃO concede acesso sem autenticação. O login por certificado digital (VIDaaS/ICP-Brasil)
-    // será um fluxo OAuth2+PKCE real (em integração). Por ora, use e-mail e senha.
-    showErr('Login por certificado digital (VIDaaS/gov.br) está em integração e será liberado em breve. Por enquanto, entre com e-mail e senha.');
-  }
+  // Pré-preenche o e-mail recém-cadastrado, se houver.
+  try{const e=sessionStorage.getItem('delfos_email_novo'); if(e){document.getElementById('email').value=e; sessionStorage.removeItem('delfos_email_novo');}}catch(_){}
 </script>
 </body>
 </html>
-                                         
