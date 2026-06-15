@@ -333,8 +333,14 @@ let clinicas=LS.get('delfos_clinicas',null); if(!clinicas){clinicas={};LS.set('d
 function saveClin(){LS.set('delfos_clinicas',clinicas);}
 
 // ===== DADOS =====
-const EXAMES={pelvica:"Pélvica / Transvaginal",adenomiose:"Pélvica — Adenomiose",tireoide:"Tireoide com Doppler",mamas:"Mamas",axilar:"Região Axilar",abdomen:"Abdômen Total",obstetrica:"Obstétrica",hycosy:"Histerossonossalpingografia (HYCOSY)"};
-const TITULOS={pelvica:"ULTRASSONOGRAFIA PÉLVICA / TRANSVAGINAL",adenomiose:"ULTRASSONOGRAFIA PÉLVICA VIA TRANSVAGINAL",tireoide:"ULTRASSONOGRAFIA DE TIREOIDE COM DOPPLER",mamas:"ULTRASSONOGRAFIA DE MAMAS",axilar:"ULTRASSONOGRAFIA DE REGIÃO AXILAR",abdomen:"ULTRASSONOGRAFIA DE ABDÔMEN TOTAL",obstetrica:"ULTRASSONOGRAFIA OBSTÉTRICA",hycosy:"HISTEROSSONOSSALPINGOGRAFIA (HYCOSY)"};
+// BIBLIOTECA de tipos de exame (disponíveis para o usuário adicionar) — NÃO é o catálogo ativo.
+const LIB_EXAMES={pelvica:"Pélvica / Transvaginal",adenomiose:"Pélvica — Adenomiose",tireoide:"Tireoide com Doppler",mamas:"Mamas",axilar:"Região Axilar",abdomen:"Abdômen Total",obstetrica:"Obstétrica",hycosy:"Histerossonossalpingografia (HYCOSY)"};
+const LIB_TITULOS={pelvica:"ULTRASSONOGRAFIA PÉLVICA / TRANSVAGINAL",adenomiose:"ULTRASSONOGRAFIA PÉLVICA VIA TRANSVAGINAL",tireoide:"ULTRASSONOGRAFIA DE TIREOIDE COM DOPPLER",mamas:"ULTRASSONOGRAFIA DE MAMAS",axilar:"ULTRASSONOGRAFIA DE REGIÃO AXILAR",abdomen:"ULTRASSONOGRAFIA DE ABDÔMEN TOTAL",obstetrica:"ULTRASSONOGRAFIA OBSTÉTRICA",hycosy:"HISTEROSSONOSSALPINGOGRAFIA (HYCOSY)"};
+// Contas que recebem o conjunto completo da Dra. Caroline (preencher com o e-mail dela):
+const CAROLINE_EMAILS=['carolbattini@gmail.com'];
+// Catálogo de exames ATIVO, por usuário (usuário novo começa VAZIO):
+let exames=LS.get('delfos_exames',null); if(!exames){exames={};}
+let EXAMES={}, TITULOS={}, SIGTAP_DEF={};
 // Códigos SIGTAP (subgrupo 02.05.02) — pré-preenchidos e EDITÁVEIS; confirmar na competência vigente.
 // Catálogo SIGTAP (subgrupo 02.05.02) — editável; confirme na competência vigente.
 const SIGTAP_CAT=[
@@ -349,7 +355,16 @@ const SIGTAP_CAT=[
   {cod:"02.05.02.006-2",nome:"US Partes Moles / Doppler de estrutura"}
 ];
 // código default por tipo de exame (preenchimento automático)
-const SIGTAP_DEF={pelvica:"02.05.02.018-6",adenomiose:"02.05.02.018-6",abdomen:"02.05.02.004-6",obstetrica:"02.05.02.015-1",tireoide:"02.05.02.013-5",mamas:"02.05.02.014-3",axilar:"02.05.02.006-2",hycosy:"02.05.02.018-6"};
+const LIB_SIGTAP={pelvica:"02.05.02.018-6",adenomiose:"02.05.02.018-6",abdomen:"02.05.02.004-6",obstetrica:"02.05.02.015-1",tireoide:"02.05.02.013-5",mamas:"02.05.02.014-3",axilar:"02.05.02.006-2",hycosy:"02.05.02.018-6"};
+// ===== CATÁLOGO DE EXAMES POR USUÁRIO =====
+function exLib(k){return {nome:LIB_EXAMES[k],titulo:LIB_TITULOS[k]||('ULTRASSONOGRAFIA '+(LIB_EXAMES[k]||k).toUpperCase()),sigtap:LIB_SIGTAP[k]||''};}
+function aplicarExames(){EXAMES={};TITULOS={};SIGTAP_DEF={};Object.keys(exames).forEach(k=>{const e=exames[k]||{};EXAMES[k]=e.nome||k;TITULOS[k]=e.titulo||('ULTRASSONOGRAFIA '+(e.nome||k).toUpperCase());if(e.sigtap)SIGTAP_DEF[k]=e.sigtap;});}
+function saveExames(){LS.set('delfos_exames',exames);aplicarExames();}
+function seedExamesCaroline(){exames={};Object.keys(LIB_EXAMES).forEach(k=>{exames[k]=exLib(k);});LS.set('delfos_exames',exames);aplicarExames();}
+function addExameLib(k){if(!k||exames[k])return;exames[k]=exLib(k);saveExames();popSelects();renderClinicas();}
+function addExameCustom(){const nm=(prompt('Nome do novo tipo de laudo (ex.: "Doppler de carótidas"):')||'').trim();if(!nm)return;let k=slug(nm),i=2;while(exames[k]){k=slug(nm)+'_'+(i++);}exames[k]={nome:nm,titulo:'ULTRASSONOGRAFIA '+nm.toUpperCase(),sigtap:''};saveExames();popSelects();renderClinicas();}
+function removerExame(k){if(!confirm('Remover o tipo de exame "'+(EXAMES[k]||k)+'"? Os laudos já salvos permanecem.'))return;delete exames[k];saveExames();popSelects();renderClinicas();}
+aplicarExames();
 function onSigtap(){
   const sel=document.getElementById('sigtapSel'),cust=document.getElementById('sigtapCustom');let cod,nome;
   if(sel.value==='custom'){cust.classList.remove('hide');cod=cust.value.trim();nome='(personalizado)';}
@@ -493,7 +508,8 @@ function popSelects(){
   const oc=Object.entries(clinicas).map(([k,c])=>`<option value="${k}">${c.nome}${c.sistema?' — '+c.sistema:''}</option>`).join('');
   document.getElementById('clinica').innerHTML=oc; if(cur&&clinicas[cur])document.getElementById('clinica').value=cur;
   document.getElementById('f-clinica').innerHTML='<option value="">Todas as clínicas</option>'+oc;
-  document.getElementById('exame').innerHTML=Object.entries(EXAMES).map(([k,n])=>`<option value="${k}">${n}</option>`).join('');
+  const exOpts=Object.entries(EXAMES).map(([k,n])=>`<option value="${k}">${n}</option>`).join('');
+  document.getElementById('exame').innerHTML=exOpts||'<option value="">— cadastre um exame em Clínicas › Modelos —</option>';
   document.getElementById('sigtapSel').innerHTML=SIGTAP_CAT.map(x=>`<option value="${x.cod}">${x.cod} — ${x.nome}</option>`).join('')+'<option value="custom">Outro (digitar código)…</option>';
 }
 function renderPainel(){
@@ -572,12 +588,18 @@ function editorClin(k){
       <label>Timbre do cabeçalho</label>${cab}<button class="act btn-ghost" style="margin-top:6px" onclick="uploadTimbre('${k}','timbreCab')">⬆️ Enviar imagem do cabeçalho</button>
       <label style="margin-top:14px">Timbre do rodapé</label>${rod}<button class="act btn-ghost" style="margin-top:6px" onclick="uploadTimbre('${k}','timbreRod')">⬆️ Enviar imagem do rodapé</button>`;
   }else if(editTab==='modelos'){
-    body='<p class="muted">Envie um modelo de laudo (.md/.txt/.html) para cada exame desta clínica. Tokens disponíveis: [PACIENTE], [SIGTAP], [CID].</p>'+
-      Object.entries(EXAMES).map(([ex,nm])=>{const has=customMascaras[k+'|'+ex];
+    const libDisp=Object.keys(LIB_EXAMES).filter(x=>!exames[x]);
+    body='<p class="muted">Tipos de exame deste usuário. Envie um modelo (.md/.txt/.html) por exame; tokens: [PACIENTE], [SIGTAP], [CID].</p>'+
+      (Object.keys(EXAMES).length?Object.entries(EXAMES).map(([ex,nm])=>{const has=customMascaras[k+'|'+ex];
         return `<div class="calc-line"><span>${nm} ${has?'<span class="pill ok">modelo próprio</span>':''}</span><span>`+
-          (has?`<button class="act btn-danger" style="padding:3px 9px" onclick="removerMascara('${k}|${ex}')">remover</button> `:'')+
-          `<button class="act btn-ghost" style="padding:3px 9px" onclick="uploadModeloClin('${k}','${ex}')">⬆️ Enviar</button></span></div>`;
-      }).join('');
+          (has?`<button class="act btn-danger" style="padding:3px 9px" onclick="removerMascara('${k}|${ex}')">remover modelo</button> `:'')+
+          `<button class="act btn-ghost" style="padding:3px 9px" onclick="uploadModeloClin('${k}','${ex}')">⬆️ Enviar</button> `+
+          `<button class="act btn-ghost" style="padding:3px 9px" title="Remover este tipo de exame do usuário" onclick="removerExame('${ex}')">✕</button></span></div>`;
+      }).join(''):'<div class="muted">Nenhum tipo de exame cadastrado ainda.</div>')+
+      '<div style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px"><label>Adicionar tipo de exame</label>'+
+      '<div class="row" style="gap:8px"><select id="libExame" style="flex:1">'+(libDisp.length?libDisp.map(x=>`<option value="${x}">${LIB_EXAMES[x]}</option>`).join(''):'<option value="">(biblioteca toda já adicionada)</option>')+'</select>'+
+      '<button class="act btn-primary" onclick="addExameLib(document.getElementById(\'libExame\').value)">Adicionar</button></div>'+
+      '<button class="act btn-ghost" style="margin-top:8px" onclick="addExameCustom()">＋ Criar tipo personalizado</button></div>';
   }
   return `<div class="editor"><div class="subtabs">${tab('dados','Dados')}${tab('timbre','Timbre (imagem)')}${tab('modelos','Modelos')}</div>${body}</div>`;
 }
@@ -843,14 +865,16 @@ function onClinica(){const c=val('clinica'),box=document.getElementById('integra
   else{box.className='status puxado';box.textContent=(info.sistema||'Prontuário')+' ativo — dados puxados.';}
   trocarExame();}
 function trocarExame(){estado.ex=val('exame');estado.dados={};estado.calcs={};document.getElementById('entrada').value='';
-  document.getElementById('upExameNome').textContent=EXAMES[estado.ex];
+  document.getElementById('upExameNome').textContent=EXAMES[estado.ex]||'(selecione/cadastre um exame)';
   const def=SIGTAP_DEF[estado.ex]||'';document.getElementById('sigtapSel').value=def;onSigtap();
   renderUploads();gerarDraft();renderCalc();renderClassificador();}
 function gerarDraft(){const ex=estado.ex,clinica=val('clinica'),key=clinica+'|'+ex,d={pac:val('paciente'),...estado.dados};
   let corpo;
-  if(customMascaras[key]){corpo=customMascaras[key].replace(/\[PACIENTE\]/g,d.pac).replace(/\[SIGTAP\]/g,val('sigtapCod')).replace(/\[CID\]/g,val('cid'));}
+  if(!ex){corpo='Nenhum tipo de exame selecionado.\n\nVá em Clínicas › Modelos para cadastrar os exames que você usa.';}
+  else if(customMascaras[key]){corpo=customMascaras[key].replace(/\[PACIENTE\]/g,d.pac).replace(/\[SIGTAP\]/g,val('sigtapCod')).replace(/\[CID\]/g,val('cid'));}
+  else if(MASCARAS[ex]){corpo=TITULOS[ex]+'\n\n'+blocoPaciente()+'\n\n'+MASCARAS[ex](d);}
   else if(MODELOS_DRA[ex]){corpo=TITULOS[ex]+'\n\n'+blocoPaciente()+'\n\n'+MODELOS_DRA[ex];}
-  else{corpo=TITULOS[ex]+'\n\n'+blocoPaciente()+'\n\n'+MASCARAS[ex](d);}
+  else{corpo=(TITULOS[ex]||'LAUDO')+'\n\n'+blocoPaciente()+'\n\n[Descreva os achados ou envie um modelo deste exame em Clínicas › Modelos.]';}
   document.getElementById('laudo').textContent=corpo;
   document.getElementById('cabecalho').innerHTML=(cabRod[clinica]&&cabRod[clinica].cab)||cabPadrao(clinica);
   document.getElementById('rodape').innerHTML=(cabRod[clinica]&&cabRod[clinica].rod)||rodPadrao(clinica);}
@@ -1029,9 +1053,10 @@ function setUsuario(u){USUARIO=u||{};
   // Isola os dados locais por conta: se o dono mudou, zera clínicas/laudos/máscaras/timbres.
   try{const dono=localStorage.getItem('delfos_owner');
     if(u&&u.email&&dono!==u.email){
-      ['delfos_clinicas','delfos_laudos','delfos_masks','delfos_cabrod'].forEach(k=>localStorage.removeItem(k));
-      clinicas={};laudosSalvos=[];customMascaras={};cabRod={};
+      ['delfos_clinicas','delfos_laudos','delfos_masks','delfos_cabrod','delfos_exames'].forEach(k=>localStorage.removeItem(k));
+      clinicas={};laudosSalvos=[];customMascaras={};cabRod={};exames={};
       LS.set('delfos_clinicas',clinicas);
+      if(CAROLINE_EMAILS.indexOf((u.email||'').toLowerCase())>=0){seedExamesCaroline();}else{LS.set('delfos_exames',exames);aplicarExames();}
       localStorage.setItem('delfos_owner',u.email);
       popSelects();renderPainel();
       if(!document.getElementById('view-arquivo').classList.contains('hide'))renderArquivo();
