@@ -152,7 +152,7 @@
       <svg class="orbit" viewBox="0 0 200 200" fill="none"><circle cx="100" cy="100" r="78" stroke="#7fb6c0" stroke-width="1" stroke-dasharray="3 6"/><circle cx="100" cy="100" r="52" stroke="#7fb6c0" stroke-width="1" stroke-dasharray="3 6"/><circle cx="100" cy="22" r="4" fill="#e6a23c"/><circle cx="178" cy="100" r="4" fill="#7fe0d0"/><circle cx="100" cy="178" r="4" fill="#9fc8d0"/><circle cx="22" cy="100" r="4" fill="#e6a23c"/><circle cx="100" cy="100" r="9" fill="#e6a23c"/></svg>
       <h1>Bem-vindo(a) à <span>Delfos EchoFlow</span></h1>
       <p>Selecione uma ação para começar.</p>
-      <div class="row"><button class="act big white" onclick="go('laudo')"><i class="ti ti-plus"></i> Novo laudo</button><button class="act big white" onclick="novaClinica()"><i class="ti ti-plus"></i> Nova clínica</button><button class="act big amber" onclick="go('arquivo')">▤ Abrir arquivo</button></div>
+      <div class="row"><button class="act big white" onclick="go('laudo')"><i class="ti ti-plus"></i> Novo laudo</button><button class="act big amber" onclick="iniciarLaudoVoz()"><i class="ti ti-microphone"></i> Ditar novo laudo</button><button class="act big white" onclick="novaClinica()"><i class="ti ti-plus"></i> Nova clínica</button><button class="act big white" onclick="go('arquivo')">▤ Abrir arquivo</button></div>
     </div>
     <div class="grid-2">
       <div class="card"><h2>Status das integrações de prontuário</h2><p class="muted" style="margin-bottom:8px">Entram por último — o laudo nunca para por falta delas.</p><table><tbody id="painel-integr"></tbody></table></div>
@@ -168,7 +168,11 @@
         <label>Clínica</label><select id="clinica" onchange="onClinica()"></select>
         <div id="integracaoStatus" class="status puxado"></div>
         <label>Tipo de exame</label><select id="exame" onchange="trocarExame()"></select>
-        <label>Nome completo do paciente</label><input id="paciente" value="MARIA SILVA SANTOS" oninput="gerarDraft()">
+        <div class="row" style="align-items:flex-end;gap:8px">
+          <div style="flex:1"><label>Nome completo do paciente</label><input id="paciente" placeholder="ditar ou digitar" oninput="gerarDraft()"></div>
+          <button id="btnVozIdent" class="act btn-ghost" type="button" onclick="toggleVoz('ident')" title="Ditar os dados do paciente por voz (diga: nome, nascimento, plano, CID; 'finalizar' para encerrar)"><i class="ti ti-microphone"></i> Ditar dados</button>
+        </div>
+        <div id="identStatus" class="muted" style="margin:-2px 0 6px"></div>
         <div class="row">
           <div style="flex:1"><label>Data de nascimento</label><input id="nasc" type="date" oninput="gerarDraft()"></div>
           <div style="width:78px"><label>Idade</label><input id="idade" readonly placeholder="—"></div>
@@ -582,49 +586,189 @@ const NUM={zero:0,um:1,uma:1,dois:2,duas:2,'três':3,tres:3,quatro:4,cinco:5,sei
 function normalizeNums(t){t=t.toLowerCase();Object.keys(NUM).forEach(w=>{t=t.replace(new RegExp('\\b'+w+'\\b','g'),NUM[w]);});t=t.replace(/(\d)\s+v[íi]rgula\s+(\d)/g,'$1,$2');t=t.replace(/(\d)\s+ponto\s+(\d)/g,'$1.$2');return t;}
 
 // ===== VOZ =====
-let recognition=null, ouvindo=false, vozAlvo='ditado', micGranted=false;
-let dgSocket=null, dgRec=null, dgStream=null;
+let recognition=null, ouvindo=false, vozAlvo='ditado', micGranted=false, identCampo='paciente', vozFase='off', fluxoLaudo=false;
+let dgSocket=null, dgStream=null, dgCtx=null, dgSrc=null, dgProc=null, dgSink=null;
 let INTEG={deepgram:false,claude:false,vidaas:false};
 const API=(function(){var o=(location.origin&&location.origin.indexOf('http')===0)?location.origin:'';var s=localStorage.getItem('delfos_api');if(s&&s.indexOf('localhost')>=0)s='';return o||s||'https://creative-profiterole-865da4.netlify.app';})();
-function vstatus(t){document.getElementById('vozStatus').textContent=t;}
-// handlers reutilizados por Web Speech e Deepgram
+function vstatus(t){const e=document.getElementById('vozStatus');if(e)e.textContent=t;}
+function istatus(t){const e=document.getElementById('identStatus');if(e)e.textContent=t;}
+function vozMsg(t){ if(vozAlvo==='ident')istatus(t); else vstatus(t); }
+function rotuloAlvo(){return vozAlvo==='comando'?'comando...':vozAlvo==='ident'?'dados do paciente...':'ditando...';}
+function faseHint(){return vozFase==='pausado'?'⏸ Pausado — diga "continuar" para retomar.':vozFase==='aguardando'?'🎤 Diga "iniciar" para começar ("finalizar" encerra).':'';}
+function detectaExame(low){
+  if(/adenomiose/.test(low))return 'adenomiose';
+  if(/transvaginal|pelvic|pelvica/.test(low))return 'pelvica';
+  if(/tireoide|tiroide/.test(low))return 'tireoide';
+  if(/axila|axilar/.test(low))return 'axilar';
+  if(/\b(mama|mamas|mamaria)\b/.test(low))return 'mamas';
+  if(/abdome|abdomen|abdominal/.test(low))return 'abdomen';
+  if(/obstetric|obstetrica|gestacional/.test(low))return 'obstetrica';
+  if(/histeros|hycosy|salpingo/.test(low))return 'hycosy';
+  return null;}
+function aplicaIdent(campo,resto){resto=(resto||'').replace(/^[\s:.,-]+/,'').trim();identCampo=campo;
+  if(!resto){istatus('🎤 diga o '+campo+'…');return;}
+  if(campo==='nasc'){const d=parseDataFala(resto);if(d)document.getElementById('nasc').value=d;else{istatus('🎤 não entendi a data — repita como "12 03 1980".');return;}}
+  else if(campo==='plano')document.getElementById('plano').value=capWords(resto);
+  else if(campo==='cid')document.getElementById('cid').value=resto.toUpperCase().replace(/\s+/g,'');
+  else document.getElementById('paciente').value=capWords(resto);
+  gerarDraft();istatus('✓ '+campo+' preenchido.');}
+function limparParaNovo(){['paciente','nasc','plano','cid'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const en=document.getElementById('entrada');if(en)en.value='';estado.dados={};estado.calcs={};gerarDraft();renderCalc();}
+function salvarNoHistorico(){const paciente=val('paciente')||'(sem nome)',clinica=val('clinica');
+  const reg={id:Date.now(),data:new Date().toLocaleDateString('pt-BR'),dataISO:new Date().toISOString().slice(0,10),clinica,paciente,exame:estado.ex,sigtap:val('sigtapCod'),cid:val('cid'),cab:document.getElementById('cabecalho').innerHTML,corpo:document.getElementById('laudo').textContent,rod:document.getElementById('rodape').innerHTML};
+  laudosSalvos.unshift(reg);LS.set('delfos_laudos',laudosSalvos);renderPainel();
+  const rb=document.getElementById('readback');if(rb)rb.textContent='✓ Laudo de '+paciente+' salvo no histórico (aba Arquivo).';}
+function iniciarLaudoVoz(){limparParaNovo();go('laudo');fluxoLaudo=true;if(!ouvindo)toggleVoz('ditado');vozMsg('🆕 Diga "iniciar", depois o tipo (ex.: "laudo transvaginal") e "paciente <nome>". "finalizar" salva no histórico.');}
+// intenções de alto nível: navegação, escolha do exame e dados do paciente (qualquer modo ativo)
+function intentoLaudo(txt){const low=fold(txt);let m;
+  if(/^\s*(combo|combinad|exames combinados|laudo[s]? combinado)/.test(low)){const exs=parseExamesCombo(low);if(exs.length){iniciarCombo(exs);}else{vozMsg('🧩 Diga quais exames: ex. "combo de transvaginal, tireoide e mamas".');}return true;}
+  if(/^\s*(novo laudo|criar laudo|comecar laudo|outro laudo)\b/.test(low)){limparParaNovo();go('laudo');fluxoLaudo=true;vozMsg('🆕 Novo laudo — diga o tipo (ex.: "laudo transvaginal") e "paciente <nome>".');return true;}
+  if(/^\s*(laudo|exame|ultrassom|ultrassonografia|tipo de exame|trocar exame)\b/.test(low)){const ex=detectaExame(low);if(ex){const s=document.getElementById('exame');if(s){s.value=ex;trocarExame();}vozMsg('🩺 Exame: '+(EXAMES[ex]||ex)+'.');return true;}}
+  if((m=low.match(/^\s*(data de nascimento|nascimento|nasceu|nascida em|nascido em)\b/))){aplicaIdent('nasc',txt.slice(m[0].length));return true;}
+  if((m=low.match(/^\s*plano( de saude)?\b/))){aplicaIdent('plano',txt.slice(m[0].length));return true;}
+  if((m=low.match(/^\s*cid\b/))){aplicaIdent('cid',txt.slice(m[0].length));return true;}
+  if((m=low.match(/^\s*(paciente|nome completo|nome do paciente|nome da paciente)\b/))){aplicaIdent('paciente',txt.slice(m[0].length));return true;}
+  return false;}
+// ===== COMBO (vários exames do mesmo paciente em UM documento Word) =====
+let comboAtivo=false, comboExames=[], comboIdx=0, comboLaudos={};
+function parseExamesCombo(low){let s=low.replace(/^.*\b(combo|combinad[oa]s?|combinados?)\b\s*(de|dos|das|com)?\s*/,'');const partes=s.split(/\s*(?:,|\be\b|\bmais\b|\bcom\b)\s*/);const out=[];partes.forEach(p=>{const ex=detectaExame(p);if(ex&&out.indexOf(ex)<0)out.push(ex);});return out;}
+function iniciarCombo(exames){exames=(exames||[]).filter(Boolean);if(!exames.length)return false;
+  comboAtivo=true;comboExames=exames;comboIdx=0;comboLaudos={};fluxoLaudo=true;limparParaNovo();go('laudo');
+  const s=document.getElementById('exame');if(s){s.value=exames[0];trocarExame();}
+  vozMsg('🧩 Combo: '+exames.map(e=>EXAMES[e]||e).join(' + ')+'. Dite o 1º ('+(EXAMES[exames[0]]||exames[0])+'); diga "próximo" para o seguinte e "finalizar" para gerar o Word.');return true;}
+async function capturaComboAtual(){const ex=comboExames[comboIdx];if(!ex)return;
+  if(val('entrada').trim()&&INTEG.claude){try{await estruturarIA();}catch(_){}}
+  comboLaudos[ex]={titulo:TITULOS[ex]||EXAMES[ex]||ex,texto:document.getElementById('laudo').textContent};}
+async function proximoCombo(){await capturaComboAtual();
+  if(comboIdx>=comboExames.length-1){vozMsg('🧩 Era o último exame. Diga "finalizar" para gerar o documento.');return;}
+  comboIdx++;const ex=comboExames[comboIdx];const s=document.getElementById('exame');if(s){s.value=ex;trocarExame();}
+  document.getElementById('entrada').value='';
+  vozMsg('🧩 Próximo: '+(EXAMES[ex]||ex)+' ('+(comboIdx+1)+'/'+comboExames.length+'). Pode ditar.');}
+function baixarWord(nome,titulo,corpoHtml){
+  const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>'+titulo+'</title></head><body style="font-family:Georgia,serif;font-size:12pt;line-height:1.5">'+corpoHtml+'</body></html>';
+  const blob=new Blob(['﻿',html],{type:'application/msword'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nome;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);}
+async function finalizarCombo(assinarTb){pararVoz();await capturaComboAtual();
+  const pac=val('paciente')||'(sem nome)';
+  const cab=document.getElementById('cabecalho').innerHTML, rod=document.getElementById('rodape').innerHTML;
+  const partes=comboExames.map(ex=>{const L=comboLaudos[ex];return L?('<h2 style="font-size:14pt;margin:0 0 6px">'+L.titulo+'</h2><div style="white-space:pre-wrap">'+escHtml(L.texto)+'</div>'):'';}).filter(Boolean);
+  const corpoHtml='<div>'+cab+'</div><hr>'+partes.join('<br style="page-break-after:always">')+'<div style="margin-top:24px">'+rod+'</div>';
+  baixarWord('combo_'+pac.replace(/[^\w]+/g,'_')+'.doc',pac+' — Combo',corpoHtml);
+  const reg={id:Date.now(),data:new Date().toLocaleDateString('pt-BR'),dataISO:new Date().toISOString().slice(0,10),clinica:val('clinica'),paciente:pac,exame:'combo',sigtap:val('sigtapCod'),cid:val('cid'),cab,corpo:comboExames.map(ex=>(comboLaudos[ex]?comboLaudos[ex].titulo+'\n'+comboLaudos[ex].texto:'')).join('\n\n———\n\n'),rod,combo:comboExames.slice()};
+  laudosSalvos.unshift(reg);LS.set('delfos_laudos',laudosSalvos);renderPainel();
+  const rb=document.getElementById('readback');if(rb)rb.textContent='🧩 Combo de '+pac+' gerado (Word) e salvo no histórico.';
+  if(assinarTb){try{await assinar();}catch(_){}}
+  comboAtivo=false;comboExames=[];comboLaudos={};comboIdx=0;fluxoLaudo=false;
+  vstatus('✓ Combo finalizado e salvo. Diga/clique "novo laudo" para o próximo paciente.');}
+// Após "finalizar": o SISTEMA redige o laudo com IA (a partir do ditado), salva e, se pedido, assina.
+async function finalizarLaudoFluxo(assinarTb){
+  pararVoz(); const rb=document.getElementById('readback');
+  if(val('entrada').trim()&&INTEG.claude){ if(rb)rb.textContent='✨ Redigindo o laudo com IA…'; try{await estruturarIA();}catch(_){} }
+  salvarNoHistorico();
+  if(assinarTb){ try{await assinar();}catch(_){} }
+  fluxoLaudo=false;
+  vstatus('✓ Laudo redigido e salvo'+(assinarTb?' · assinatura iniciada':'')+'. Diga/clique "novo laudo" para o próximo paciente.');
+}
+// Correção por voz: "corrigir ..." → a IA ajusta apenas o ponto pedido.
+async function corrigirIA(instr){
+  const rb=document.getElementById('readback');
+  if(!INTEG.claude){if(rb)rb.textContent='IA não configurada para correção (defina ANTHROPIC_API_KEY).';return;}
+  const laudo=document.getElementById('laudo').textContent;
+  if(rb)rb.textContent='✏️ Corrigindo com IA…';
+  try{const r=await fetch(API+'/ia/estruturar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({modo:'corrigir',tipo_exame:estado.ex,laudo,instrucao:instr})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||!j.laudo){if(rb)rb.textContent=j.detail||'Falha ao corrigir.';return;}
+    pushHist();document.getElementById('laudo').textContent=j.laudo;if(rb)rb.textContent='✏️ Correção aplicada — revise.';
+  }catch(_){if(rb)rb.textContent='Sem conexão com a IA.';}
+}
+function roteia(txt){let low=fold(txt);
+  if(/\b(finalizar|finaliza|encerrar|pode parar|parar ditado|parar gravacao)\b/.test(low)||/\bsalvar e assinar\b/.test(low)){
+    const assinarTb=/\bassinar\b/.test(low);
+    if(comboAtivo){finalizarCombo(assinarTb);}else if(fluxoLaudo){finalizarLaudoFluxo(assinarTb);}else{pararVoz();vozMsg('✓ Finalizado.');}
+    return;}
+  if(comboAtivo&&vozFase==='ativo'&&/\b(proximo|proxima|seguinte|proximo exame|salvar exame|outro exame)\b/.test(low)){proximoCombo();return;}
+  if(/\b(pausar|pausa|pause|aguarde|espera|espere|um momento)\b/.test(low)){vozFase='pausado';vozMsg('⏸ Pausado — som ignorado. Diga "continuar".');return;}
+  if(/\b(iniciar|inicia|comecar|comeca|continuar|continua|retomar|retoma|voltar|pode continuar|pode comecar|gravar)\b/.test(low)){vozFase='ativo';txt=txt.replace(/^[\s,.:-]*\b(iniciar|inicia|come[cç]ar|come[cç]a|continuar|continua|retomar|retoma|voltar|pode\s+(?:continuar|come[cç]ar)|gravar)\b[\s,.:-]*/i,'');low=fold(txt);if(!txt.trim()){vozMsg('🎤 Ativo — pode falar.');return;}}
+  if(vozFase!=='ativo')return;
+  if(/^\s*(corrigir|corrige|corretor|correcao)\b/.test(low)){corrigirIA(txt.replace(/^[\s,.:-]*\S+\s*/,'').trim()||txt);return;}
+  if(intentoLaudo(txt))return;
+  if(vozAlvo==='comando')comandoFinal(txt);else if(vozAlvo==='ident')identFinal(txt);else ditadoFinal(txt);}
+// ---- ditado do laudo ----
 function ditadoFinal(final){const low=fold(final);
   if(/\b(finalizar|finaliza|concluir|encerrar|parar|pode parar)\b/.test(low)){pararVoz();vstatus('✓ Ditado finalizado.');return;}
   if(/\b(normalidade|laudo normal|tudo normal|exame normal)\b/.test(low)){normalidade();vstatus('✓ Normalidade preenchida.');return;}
   if(/\b(limpar|apagar tudo|recomecar)\b/.test(low)){document.getElementById('entrada').value='';estado.dados={};estado.calcs={};gerarDraft();renderCalc();vstatus('🎤 Limpo. Continue ditando...');return;}
   const ent=document.getElementById('entrada');ent.value=(ent.value+' '+final).replace(/\s+/g,' ').trim();incorporar();}
 function comandoFinal(final){const c=document.getElementById('comando');c.value=final.trim();executarComando();c.value='';}
-// Web Speech API (padrão local / fallback)
+// ---- identificação do paciente por voz (ativo até "finalizar") ----
+function capWords(s){return s.replace(/\s+/g,' ').trim().split(' ').map(w=>w?w.charAt(0).toUpperCase()+w.slice(1):'').join(' ');}
+function parseDataFala(s){s=fold(s);
+  const meses={janeiro:1,fevereiro:2,marco:3,abril:4,maio:5,junho:6,julho:7,agosto:8,setembro:9,outubro:10,novembro:11,dezembro:12};
+  let mm=s.match(/(\d{1,2})\D+(janeiro|fevereiro|marco|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)\D+(\d{4}|\d{2})/);
+  if(mm){let d=mm[1].padStart(2,'0'),mo=String(meses[mm[2]]).padStart(2,'0'),y=mm[3];if(y.length===2)y='19'+y;return y+'-'+mo+'-'+d;}
+  const nums=(s.match(/\d+/g)||[]);
+  if(nums.length>=3){let d=nums[0].padStart(2,'0'),mo=nums[1].padStart(2,'0'),y=nums[2];if(y.length===2)y='19'+y;return y+'-'+mo+'-'+d;}
+  return null;}
+function identFinal(final){const low=fold(final);let m,campo=identCampo,resto=final;
+  if((m=low.match(/\b(data de nascimento|nascimento|nasceu|nascida em|nascido em)\b/))){campo='nasc';resto=final.slice(low.indexOf(m[0])+m[0].length);}
+  else if((m=low.match(/\bplano( de saude)?\b/))){campo='plano';resto=final.slice(low.indexOf(m[0])+m[0].length);}
+  else if((m=low.match(/\bcid\b/))){campo='cid';resto=final.slice(low.indexOf(m[0])+m[0].length);}
+  else if((m=low.match(/\b(paciente|nome completo|nome)\b/))){campo='paciente';resto=final.slice(low.indexOf(m[0])+m[0].length);}
+  aplicaIdent(campo,resto);}
+// ---- Web Speech API (fallback; instável no iOS) ----
 function initVoz(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return null;const r=new SR();r.lang='pt-BR';r.continuous=true;r.interimResults=true;
   r.onstart=()=>{micGranted=true;};
   r.onresult=(e)=>{let interim='',final='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)final+=t+' ';else interim+=t;}
-    if(vozAlvo==='ditado'){if(final)ditadoFinal(final);vstatus('🎤 '+(interim||'ouvindo... diga "finalizar" para encerrar'));}
-    else{if(final)comandoFinal(final);vstatus('⌘ '+(interim||'ouvindo comando...'));}};
-  r.onerror=(e)=>{const m=e.error==='not-allowed'?'permissão do microfone negada — autorize no cadeado do navegador':e.error==='no-speech'?'não captei áudio, continue falando':e.error==='aborted'?'':'erro: '+e.error;if(m)vstatus('⚠️ '+m);if(e.error==='not-allowed'){micGranted=false;pararVoz();}};
+    if(final)roteia(final.trim()); if(ouvindo)vozMsg(vozFase==='ativo'?((vozAlvo==='comando'?'⌘ ':'🎤 ')+(interim||'ouvindo…')):faseHint());};
+  r.onerror=(e)=>{const m=e.error==='not-allowed'?'permissão do microfone negada — autorize no navegador':e.error==='no-speech'?'não captei áudio, continue falando':e.error==='aborted'?'':'erro: '+e.error;if(m)vozMsg('⚠️ '+m);if(e.error==='not-allowed'){micGranted=false;pararVoz();}};
   r.onend=()=>{if(ouvindo&&!dgSocket){try{r.start();}catch(_){}}};
   return r;}
-// Deepgram (produção, pt-BR via chave temporária do backend)
+// ---- Deepgram em produção: captura PCM linear16 via Web Audio (compatível com iOS/Safari) ----
+function ensureAudioCtx(){try{if(!dgCtx)dgCtx=new (window.AudioContext||window.webkitAudioContext)();if(dgCtx.state==='suspended')dgCtx.resume().catch(()=>{});}catch(_){}}
+function floatToPCM16(input,inRate,outRate){
+  if(outRate>=inRate){const b=new Int16Array(input.length);for(let i=0;i<input.length;i++){let s=Math.max(-1,Math.min(1,input[i]));b[i]=s<0?s*0x8000:s*0x7FFF;}return b.buffer;}
+  const ratio=inRate/outRate,len=Math.round(input.length/ratio),out=new Int16Array(len);let o=0,i=0;
+  while(o<len){const next=Math.round((o+1)*ratio);let sum=0,c=0;for(;i<next&&i<input.length;i++){sum+=input[i];c++;}let s=c?sum/c:0;s=Math.max(-1,Math.min(1,s));out[o]=s<0?s*0x8000:s*0x7FFF;o++;}
+  return out.buffer;}
 async function startDeepgram(){
   const r=await fetch(API+'/stt/token'); if(!r.ok)throw new Error('sem token');
   const {key,model}=await r.json();
-  dgStream=await navigator.mediaDevices.getUserMedia({audio:true}); micGranted=true;
-  const url='wss://api.deepgram.com/v1/listen?model='+(model||'nova-3')+'&language=pt-BR&interim_results=true&smart_format=true&punctuate=true';
+  dgStream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true}}); micGranted=true;
+  ensureAudioCtx(); if(!dgCtx)throw new Error('sem audio');
+  const inRate=dgCtx.sampleRate, outRate=16000;
+  const url='wss://api.deepgram.com/v1/listen?model='+(model||'nova-2')+'&language=pt-BR&encoding=linear16&sample_rate='+outRate+'&channels=1&interim_results=true&smart_format=true&punctuate=true';
   dgSocket=new WebSocket(url,['token',key]);
-  dgSocket.onopen=()=>{dgRec=new MediaRecorder(dgStream,{mimeType:'audio/webm'});dgRec.ondataavailable=ev=>{if(ev.data.size>0&&dgSocket&&dgSocket.readyState===1)dgSocket.send(ev.data);};dgRec.start(250);vstatus('🎤 Deepgram — '+(vozAlvo==='ditado'?'ditando...':'comando...'));};
-  dgSocket.onmessage=(m)=>{let d;try{d=JSON.parse(m.data);}catch(_){return;}const alt=d.channel&&d.channel.alternatives&&d.channel.alternatives[0];if(!alt)return;const txt=(alt.transcript||'').trim();if(!txt)return;
-    if(d.is_final){if(vozAlvo==='ditado')ditadoFinal(txt);else comandoFinal(txt);}else vstatus((vozAlvo==='ditado'?'🎤 ':'⌘ ')+txt);};
-  dgSocket.onerror=()=>{vstatus('⚠️ Deepgram indisponível, usando voz do navegador.');pararDeepgram();startWebSpeech();};
+  dgSocket.onopen=()=>{
+    dgSrc=dgCtx.createMediaStreamSource(dgStream);
+    dgProc=dgCtx.createScriptProcessor(4096,1,1);
+    dgProc.onaudioprocess=(e)=>{if(!dgSocket||dgSocket.readyState!==1)return;try{dgSocket.send(floatToPCM16(e.inputBuffer.getChannelData(0),inRate,outRate));}catch(_){}};
+    dgSink=dgCtx.createGain();dgSink.gain.value=0;
+    dgSrc.connect(dgProc);dgProc.connect(dgSink);dgSink.connect(dgCtx.destination);
+    vozMsg('🎤 Deepgram pronto. '+faseHint());};
+  dgSocket.onmessage=(msg)=>{let d;try{d=JSON.parse(msg.data);}catch(_){return;}const alt=d.channel&&d.channel.alternatives&&d.channel.alternatives[0];if(!alt)return;const txt=(alt.transcript||'').trim();if(!txt)return;
+    if(d.is_final){roteia(txt);}else if(vozFase==='ativo')vozMsg((vozAlvo==='comando'?'⌘ ':'🎤 ')+txt);};
+  dgSocket.onerror=()=>{vozMsg('⚠️ Deepgram indisponível, tentando voz do navegador.');pararDeepgram();startWebSpeech();};
 }
-function pararDeepgram(){try{if(dgRec&&dgRec.state!=='inactive')dgRec.stop();}catch(_){}try{if(dgSocket)dgSocket.close();}catch(_){}try{if(dgStream)dgStream.getTracks().forEach(t=>t.stop());}catch(_){}dgRec=dgSocket=dgStream=null;}
-function startWebSpeech(){if(!recognition)recognition=initVoz();if(!recognition){vstatus('⚠️ Navegador sem voz nativa. Use Chrome/Edge ou digite.');return false;}try{recognition.start();}catch(_){}return true;}
+function pararDeepgram(){
+  try{if(dgProc){dgProc.onaudioprocess=null;dgProc.disconnect();}}catch(_){}
+  try{if(dgSink)dgSink.disconnect();}catch(_){}
+  try{if(dgSrc)dgSrc.disconnect();}catch(_){}
+  try{if(dgSocket){if(dgSocket.readyState===1)dgSocket.send(JSON.stringify({type:'CloseStream'}));dgSocket.close();}}catch(_){}
+  try{if(dgStream)dgStream.getTracks().forEach(t=>t.stop());}catch(_){}
+  try{if(dgCtx&&dgCtx.state!=='closed')dgCtx.close();}catch(_){}
+  dgProc=dgSink=dgSrc=dgSocket=dgStream=dgCtx=null;}
+function startWebSpeech(){if(!recognition)recognition=initVoz();if(!recognition){vozMsg('⚠️ Este navegador não tem voz nativa estável. No iPad/iPhone, ative o Deepgram para ditar.');return false;}try{recognition.start();}catch(_){}return true;}
 function toggleVoz(alvo){
-  if(ouvindo){ if(alvo!==vozAlvo){vozAlvo=alvo;botoesVoz();vstatus(alvo==='ditado'?'🎤 ditando...':'⌘ comando...');return;} pararVoz(); return; }
-  vozAlvo=alvo; ouvindo=true; botoesVoz();
-  if(INTEG.deepgram){vstatus('🎤 conectando Deepgram...');startDeepgram().catch(()=>{startWebSpeech();});}
-  else{ if(!startWebSpeech()){ouvindo=false;botoesVoz();return;} vstatus(micGranted?(alvo==='ditado'?'🎤 ditando...':'⌘ comando...'):'🎤 permita o microfone...'); }
+  if(ouvindo){ if(alvo!==vozAlvo){vozAlvo=alvo;if(alvo==='ident')identCampo='paciente';botoesVoz();vozMsg('🎤 '+rotuloAlvo());return;} pararVoz(); return; }
+  vozAlvo=alvo; ouvindo=true; vozFase='aguardando'; if(alvo==='ident')identCampo='paciente'; botoesVoz();
+  if(INTEG.deepgram){ensureAudioCtx();vozMsg('🎤 conectando Deepgram...');startDeepgram().catch(()=>{startWebSpeech();});}
+  else{ if(!startWebSpeech()){ouvindo=false;vozFase='off';botoesVoz();return;} vozMsg(micGranted?faseHint():'🎤 permita o microfone...'); }
 }
-function pararVoz(){ouvindo=false;botoesVoz();pararDeepgram();if(recognition){try{recognition.stop();}catch(_){}}}
-function botoesVoz(){document.getElementById('btnVoz').classList.toggle('rec',ouvindo&&vozAlvo==='ditado');document.getElementById('btnVozCmd').classList.toggle('rec',ouvindo&&vozAlvo==='comando');document.getElementById('btnVoz').innerHTML=(ouvindo&&vozAlvo==='ditado')?'<i class="ti ti-player-stop"></i> Parar':'<i class="ti ti-microphone"></i> Falar medidas';document.getElementById('btnVozCmd').innerHTML=(ouvindo&&vozAlvo==='comando')?'<i class="ti ti-player-stop"></i> Parar':'<i class="ti ti-microphone"></i> Falar';}
+function pararVoz(){ouvindo=false;vozFase='off';botoesVoz();pararDeepgram();if(recognition){try{recognition.stop();}catch(_){}}}
+function botoesVoz(){
+  const bv=document.getElementById('btnVoz'),bc=document.getElementById('btnVozCmd'),bi=document.getElementById('btnVozIdent');
+  if(bv){bv.classList.toggle('rec',ouvindo&&vozAlvo==='ditado');bv.innerHTML=(ouvindo&&vozAlvo==='ditado')?'<i class="ti ti-player-stop"></i> Parar':'<i class="ti ti-microphone"></i> Falar medidas';}
+  if(bc){bc.classList.toggle('rec',ouvindo&&vozAlvo==='comando');bc.innerHTML=(ouvindo&&vozAlvo==='comando')?'<i class="ti ti-player-stop"></i> Parar':'<i class="ti ti-microphone"></i> Falar';}
+  if(bi){bi.classList.toggle('rec',ouvindo&&vozAlvo==='ident');bi.innerHTML=(ouvindo&&vozAlvo==='ident')?'<i class="ti ti-player-stop"></i> Parar':'<i class="ti ti-microphone"></i> Ditar dados';}}
 // status das integrações + estruturação por IA + assinatura VIDaaS
 async function carregarIntegracoes(){
   try{const r=await fetch(API+'/integracoes/status');if(r.ok)INTEG=await r.json();}catch(_){}
@@ -677,7 +821,7 @@ async function estruturarIA(){
   if(!INTEG.claude){popup('IA não configurada',['Defina ANTHROPIC_API_KEY no servidor para usar o Claude. Por ora, use Incorporar/Normalidade e os classificadores.'],true);return;}
   document.getElementById('readback').textContent='✨ Estruturando com IA...';
   try{
-    const mascara=TITULOS[ex]+'\n\n'+MASCARAS[ex]({pac:val('paciente')});
+    const mascara=TITULOS[ex]+'\n\n'+(MASCARAS[ex]?MASCARAS[ex]({pac:val('paciente')}):(MODELOS_DRA[ex]||''));
     const r=await fetch(API+'/ia/estruturar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo_exame:ex,transcricao:transc,mascara,valores_calculados:estado.calcs})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok){popup('Falha na IA',[j.detail||'Erro ao estruturar.'],true);document.getElementById('readback').textContent=j.detail||'Falha na IA.';return;}
@@ -757,7 +901,15 @@ function normalidade(){
 }
 function executarComando(){
   const cmd=val('comando').trim();
-  if(!cmd){document.getElementById('readback').textContent='Digite ou dite um comando (ex.: "trocar X por Y").';return;}
+  if(!cmd){document.getElementById('readback').textContent='Comandos: "trocar X por Y", "apagar última frase", "inserir ...", "normalidade", "estruturar com IA", "salvar", "imprimir", "assinar", "desfazer".';return;}
+  const rb=document.getElementById('readback'); const f=fold(cmd);
+  // ---- comandos de AÇÃO por voz ----
+  if(/\b(estruturar|organizar)\b/.test(f)||/\b(inteligencia artificial|com ia|usar ia|pela ia)\b/.test(f)){rb.textContent='↻ Estruturando com IA…';estruturarIA();return;}
+  if(/\bdesfazer\b/.test(f)){undo();return;}
+  if(/\b(normalidade|laudo normal|tudo normal|exame normal)\b/.test(f)){normalidade();rb.textContent='✓ Normalidade preenchida.';return;}
+  if(/\b(salvar|guardar)\b/.test(f)){rb.textContent='↻ Salvando…';salvarLaudo();return;}
+  if(/\bimprimir\b/.test(f)||/\bimpress/.test(f)){ if(/termic|cupom|etiqueta/.test(f)){imprimirTermica();}else{imprimirA4();} return; }
+  if(/\bassinar\b/.test(f)){rb.textContent='↻ Iniciando assinatura…';assinar();return;}
   let el=document.getElementById('laudo'),txt=el.textContent,msg='';const low=cmd.toLowerCase();
   let m=low.match(/trocar\s+(.+?)\s+por\s+(.+?)(?:\s+(?:no|na|em)\s+.+)?$/);
   if(m){const de=cmd.slice(low.indexOf(m[1]),low.indexOf(m[1])+m[1].length).trim();
