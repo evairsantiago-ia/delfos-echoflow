@@ -689,7 +689,7 @@ async function finalizarLaudoFluxo(assinarTb){
   pararVoz(); const rb=document.getElementById('readback');
   const salvar=fluxoLaudo||assinarTb; const tinha=!!val('entrada').trim();
   if(tinha&&INTEG.claude){ if(rb)rb.textContent='✨ Redigindo o laudo com IA…'; try{await estruturarIA();}catch(_){} }
-  else if(tinha){ const ent=val('entrada'); pushHist(); document.getElementById('laudo').textContent=(document.getElementById('laudo').textContent+'\n'+ent).trim(); }
+  else if(tinha){ estado.ditado=val('entrada').trim(); gerarDraft(); }
   if(salvar){ salvarNoHistorico(); if(assinarTb){ try{await assinar();}catch(_){} } }
   fluxoLaudo=false;
   vstatus(tinha? ('✓ Laudo redigido — revise.'+(salvar?' Salvo no histórico.':' Use Salvar/Assinar quando quiser.')) : '✓ Voz encerrada.');
@@ -851,7 +851,7 @@ async function estruturarIA(){
     const r=await fetch(API+'/ia/estruturar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tipo_exame:ex,transcricao:transc,mascara,valores_calculados:estado.calcs})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok){popup('Falha na IA',[j.detail||'Erro ao estruturar.'],true);document.getElementById('readback').textContent=j.detail||'Falha na IA.';return;}
-    pushHist();document.getElementById('laudo').textContent=TITULOS[ex]+'\n\n'+blocoPaciente()+'\n\n'+j.laudo;
+    pushHist();estado.ditado='';document.getElementById('laudo').textContent=TITULOS[ex]+'\n\n'+blocoPaciente()+'\n\n'+j.laudo;
     document.getElementById('readback').textContent='✨ Laudo estruturado pela IA (revise antes de assinar).';
   }catch(err){popup('Sem conexão',['Não foi possível conectar ao servidor de IA.'],true);document.getElementById('readback').textContent='Sem conexão com a IA.';}
 }
@@ -867,7 +867,7 @@ function onClinica(){const c=val('clinica'),box=document.getElementById('integra
   else if(info.integ==='wait'){box.className='status ditado';box.textContent=(info.sistema||'Prontuário')+': integração pendente — opera em MODO DITADO sem travar.';}
   else{box.className='status puxado';box.textContent=(info.sistema||'Prontuário')+' ativo — dados puxados.';}
   trocarExame();}
-function trocarExame(){estado.ex=val('exame');estado.dados={};estado.calcs={};document.getElementById('entrada').value='';
+function trocarExame(){estado.ex=val('exame');estado.dados={};estado.calcs={};estado.ditado='';document.getElementById('entrada').value='';
   document.getElementById('upExameNome').textContent=EXAMES[estado.ex]||'(selecione/cadastre um exame)';
   const def=SIGTAP_DEF[estado.ex]||'';document.getElementById('sigtapSel').value=def;onSigtap();
   renderUploads();gerarDraft();renderCalc();renderClassificador();}
@@ -878,6 +878,7 @@ function gerarDraft(){const ex=estado.ex,clinica=val('clinica'),key=clinica+'|'+
   else if(MASCARAS[ex]){corpo=TITULOS[ex]+'\n\n'+blocoPaciente()+'\n\n'+MASCARAS[ex](d);}
   else if(MODELOS_DRA[ex]){corpo=TITULOS[ex]+'\n\n'+blocoPaciente()+'\n\n'+MODELOS_DRA[ex];}
   else{corpo=(TITULOS[ex]||'LAUDO')+'\n\n'+blocoPaciente()+'\n\n[Descreva os achados ou envie um modelo deste exame em Clínicas › Modelos.]';}
+  if(ex&&estado.ditado){const bl='\n\n— ACHADOS DITADOS (revisar/editar) —\n'+estado.ditado;corpo=/\n\nCONCLUS/i.test(corpo)?corpo.replace(/\n\nCONCLUS/i,bl+'\n\nCONCLUS'):corpo+bl;}
   document.getElementById('laudo').textContent=corpo;
   document.getElementById('cabecalho').innerHTML=(cabRod[clinica]&&cabRod[clinica].cab)||cabPadrao(clinica);
   document.getElementById('rodape').innerHTML=(cabRod[clinica]&&cabRod[clinica].rod)||rodPadrao(clinica);}
@@ -906,7 +907,9 @@ function avaliar(){const d=estado.dados,ex=estado.ex,itens=[];let alerta=false;c
   if(ex==='mamas'&&d.biradsCat!=null)flag(d.biradsCat>=3,'BI-RADS '+d.biradsCat+' — conduta: '+biradsTab[d.biradsCat][1]+'.','BI-RADS '+d.biradsCat+' — '+biradsTab[d.biradsCat][1]+'.');
   return {alerta,itens};}
 function popup(titulo,itens,alerta){if(!itens.length)return;const box=document.getElementById('toast');const el=document.createElement('div');el.className='toast'+(alerta?' alerta':'');el.innerHTML='<span class="x" onclick="this.parentNode.remove()">✕</span><h4>'+(alerta?'⚠ ':'✓ ')+titulo+'</h4><ul>'+itens.map(i=>'<li>'+i+'</li>').join('')+'</ul><div class="muted" style="margin-top:6px">Referências ilustrativas — decisão é do médico.</div>';box.appendChild(el);setTimeout(()=>{if(el.parentNode)el.remove();},alerta?12000:7000);}
-function incorporar(){const antes=JSON.stringify(estado.dados);coletarMedidas();pushHist();gerarDraft();renderCalc();const mudou=JSON.stringify(estado.dados)!==antes;document.getElementById('readback').textContent=mudou?'＋ Medidas incorporadas.':'Nenhuma medida reconhecida — confira o formato (ex.: "ovário direito 3 por 2 por 2").';if(mudou){const a=avaliar();popup(a.alerta?'Possível alteração — avaliar':'Dentro da referência',a.itens,a.alerta);}}
+function incorporar(){const antes=JSON.stringify(estado.dados);coletarMedidas();estado.ditado=val('entrada').trim();pushHist();gerarDraft();renderCalc();const mudou=JSON.stringify(estado.dados)!==antes;
+  document.getElementById('readback').textContent=(mudou?'＋ Medidas incorporadas. ':'')+(estado.ditado?'Achados ditados inseridos no laudo (revise/edite).':(mudou?'':'Nada reconhecido — dite medidas ou achados.'));
+  if(mudou){const a=avaliar();popup(a.alerta?'Possível alteração — avaliar':'Dentro da referência',a.itens,a.alerta);}}
 // valores NORMAIS de referência por exame (editáveis no laudo)
 const NORMAIS={
   pelvica:{u:'7,0 x 4,0 x 3,0 cm',uvol:44,endo:'6',od:'3,0 x 2,0 x 1,5 cm',odvol:4.7,oe:'3,0 x 2,0 x 1,5 cm',oevol:4.7},
