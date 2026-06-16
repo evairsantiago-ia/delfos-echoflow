@@ -170,7 +170,7 @@
         <label>Tipo de exame</label><select id="exame" onchange="trocarExame()"></select>
         <div class="row" style="align-items:flex-end;gap:8px">
           <div style="flex:1"><label>Nome completo do paciente</label><input id="paciente" placeholder="ditar ou digitar" oninput="gerarDraft()"></div>
-          <button id="btnVozIdent" class="act btn-ghost" type="button" onclick="toggleVoz('ident')" title="Ditar os dados do paciente por voz (diga: nome, nascimento, plano, CID; 'finalizar' para encerrar)"><i class="ti ti-microphone"></i> Ditar dados</button>
+          <button id="btnVozIdent" class="act btn-ghost" type="button" onclick="toggleVoz('ident')" title="Ditar os dados do paciente por voz (diga: nome, nascimento, plano, CID; 'finalizar' para encerrar)"><i class="ti ti-microphone"></i> Ditar identificação</button>
         </div>
         <div id="identStatus" class="muted" style="margin:-2px 0 6px"></div>
         <div class="row">
@@ -221,7 +221,7 @@
 
       <div class="card no-print">
         <h2>3 · Ditar medidas / achados</h2>
-        <button id="btnVoz" class="act btn-voz" style="width:100%" onclick="toggleVoz('ditado')"><i class="ti ti-microphone"></i> Falar medidas</button>
+        <button id="btnVoz" class="act btn-voz" style="width:100%" onclick="toggleVoz('ditado')"><i class="ti ti-microphone"></i> Ditar achados</button>
         <textarea id="entrada" placeholder="ex.: 'útero 7 por 4 por 3, endométrio 8' — ou digite e clique em Incorporar"></textarea>
         <div class="row"><button class="act btn-primary" onclick="incorporar()"><i class="ti ti-plus"></i> Incorporar</button><button class="act btn-amber" onclick="normalidade()"><i class="ti ti-check"></i> Normalidade</button><button class="act btn-ghost" id="btnIA" onclick="estruturarIA()"><i class="ti ti-wand"></i> Estruturar com IA</button></div>
         <div id="vozStatus" class="vozstatus"></div>
@@ -276,9 +276,11 @@
 <div id="perfilModal" style="display:none;position:fixed;inset:0;background:rgba(10,30,35,.45);z-index:100;align-items:center;justify-content:center;padding:18px">
   <div class="card" style="max-width:460px;width:100%;margin:0;max-height:88vh;overflow:auto">
     <h2>Meu perfil</h2>
-    <div class="calc-line"><span>Nome</span><b id="perfilNome">—</b></div>
-    <div class="calc-line"><span>E-mail</span><b id="perfilEmail">—</b></div>
-    <div class="calc-line"><span>CRM</span><b id="perfilCrm">—</b></div>
+    <label>Nome completo</label><input id="perfilNome" placeholder="Seu nome completo">
+    <label>CRM</label><input id="perfilCrm" placeholder="ex.: MS:11375">
+    <div class="calc-line"><span>E-mail (login)</span><b id="perfilEmail">—</b></div>
+    <div class="row" style="margin-top:8px"><button class="act btn-primary" onclick="salvarPerfil()"><i class="ti ti-device-floppy"></i> Salvar perfil</button></div>
+    <div id="pf_perfil_msg" class="muted" style="margin-top:4px"></div>
 
     <h2 style="margin-top:18px">Aparência</h2>
     <label>Paleta de cores</label>
@@ -685,11 +687,12 @@ async function finalizarCombo(assinarTb){pararVoz();await capturaComboAtual();
 // Após "finalizar": o SISTEMA redige o laudo com IA (a partir do ditado), salva e, se pedido, assina.
 async function finalizarLaudoFluxo(assinarTb){
   pararVoz(); const rb=document.getElementById('readback');
-  if(val('entrada').trim()&&INTEG.claude){ if(rb)rb.textContent='✨ Redigindo o laudo com IA…'; try{await estruturarIA();}catch(_){} }
-  salvarNoHistorico();
-  if(assinarTb){ try{await assinar();}catch(_){} }
+  const salvar=fluxoLaudo||assinarTb; const tinha=!!val('entrada').trim();
+  if(tinha&&INTEG.claude){ if(rb)rb.textContent='✨ Redigindo o laudo com IA…'; try{await estruturarIA();}catch(_){} }
+  else if(tinha){ const ent=val('entrada'); pushHist(); document.getElementById('laudo').textContent=(document.getElementById('laudo').textContent+'\n'+ent).trim(); }
+  if(salvar){ salvarNoHistorico(); if(assinarTb){ try{await assinar();}catch(_){} } }
   fluxoLaudo=false;
-  vstatus('✓ Laudo redigido e salvo'+(assinarTb?' · assinatura iniciada':'')+'. Diga/clique "novo laudo" para o próximo paciente.');
+  vstatus(tinha? ('✓ Laudo redigido — revise.'+(salvar?' Salvo no histórico.':' Use Salvar/Assinar quando quiser.')) : '✓ Voz encerrada.');
 }
 // Correção por voz: "corrigir ..." → a IA ajusta apenas o ponto pedido.
 async function corrigirIA(instr){
@@ -706,7 +709,7 @@ async function corrigirIA(instr){
 function roteia(txt){let low=fold(txt);
   if(/\b(finalizar|finaliza|encerrar|pode parar|parar ditado|parar gravacao)\b/.test(low)||/\bsalvar e assinar\b/.test(low)){
     const assinarTb=/\bassinar\b/.test(low);
-    if(comboAtivo){finalizarCombo(assinarTb);}else if(fluxoLaudo){finalizarLaudoFluxo(assinarTb);}else{pararVoz();vozMsg('✓ Finalizado.');}
+    if(comboAtivo){finalizarCombo(assinarTb);}else{finalizarLaudoFluxo(assinarTb);}
     return;}
   if(comboAtivo&&vozFase==='ativo'&&/\b(proximo|proxima|seguinte|proximo exame|salvar exame|outro exame)\b/.test(low)){proximoCombo();return;}
   if(/\b(pausar|pausa|pause|aguarde|espera|espere|um momento)\b/.test(low)){vozFase='pausado';vozMsg('⏸ Pausado — som ignorado. Diga "continuar".');return;}
@@ -766,7 +769,7 @@ async function startDeepgram(){
     dgProc.onaudioprocess=(e)=>{if(!dgSocket||dgSocket.readyState!==1)return;try{dgSocket.send(floatToPCM16(e.inputBuffer.getChannelData(0),inRate,outRate));}catch(_){}};
     dgSink=dgCtx.createGain();dgSink.gain.value=0;
     dgSrc.connect(dgProc);dgProc.connect(dgSink);dgSink.connect(dgCtx.destination);
-    vozMsg('🎤 Deepgram pronto. '+faseHint());};
+    vozMsg('🎤 Ouvindo (Deepgram) — '+rotuloAlvo()+' Diga "finalizar" ao terminar.');};
   dgSocket.onmessage=(msg)=>{let d;try{d=JSON.parse(msg.data);}catch(_){return;}const alt=d.channel&&d.channel.alternatives&&d.channel.alternatives[0];if(!alt)return;const txt=(alt.transcript||'').trim();if(!txt)return;
     if(d.is_final){roteia(txt);}else if(vozFase==='ativo')vozMsg((vozAlvo==='comando'?'⌘ ':'🎤 ')+txt);};
   dgSocket.onerror=()=>{vozMsg('⚠️ Deepgram indisponível, tentando voz do navegador.');pararDeepgram();startWebSpeech();};
@@ -782,16 +785,16 @@ function pararDeepgram(){
 function startWebSpeech(){if(!recognition)recognition=initVoz();if(!recognition){vozMsg('⚠️ Este navegador não tem voz nativa estável. No iPad/iPhone, ative o Deepgram para ditar.');return false;}try{recognition.start();}catch(_){}return true;}
 function toggleVoz(alvo){
   if(ouvindo){ if(alvo!==vozAlvo){vozAlvo=alvo;if(alvo==='ident')identCampo='paciente';botoesVoz();vozMsg('🎤 '+rotuloAlvo());return;} pararVoz(); return; }
-  vozAlvo=alvo; ouvindo=true; vozFase='aguardando'; if(alvo==='ident')identCampo='paciente'; botoesVoz();
+  vozAlvo=alvo; ouvindo=true; vozFase='ativo'; if(alvo==='ident')identCampo='paciente'; botoesVoz();
   if(INTEG.deepgram){ensureAudioCtx();vozMsg('🎤 conectando Deepgram...');startDeepgram().catch(()=>{startWebSpeech();});}
-  else{ if(!startWebSpeech()){ouvindo=false;vozFase='off';botoesVoz();return;} vozMsg(micGranted?faseHint():'🎤 permita o microfone...'); }
+  else{ if(!startWebSpeech()){ouvindo=false;vozFase='off';botoesVoz();return;} vozMsg(micGranted?('🎤 Ouvindo — '+rotuloAlvo()+' Diga "finalizar" ao terminar.'):'🎤 permita o microfone...'); }
 }
 function pararVoz(){ouvindo=false;vozFase='off';botoesVoz();pararDeepgram();if(recognition){try{recognition.stop();}catch(_){}}}
 function botoesVoz(){
   const bv=document.getElementById('btnVoz'),bc=document.getElementById('btnVozCmd'),bi=document.getElementById('btnVozIdent');
-  if(bv){bv.classList.toggle('rec',ouvindo&&vozAlvo==='ditado');bv.innerHTML=(ouvindo&&vozAlvo==='ditado')?'<i class="ti ti-player-stop"></i> Parar':'<i class="ti ti-microphone"></i> Falar medidas';}
+  if(bv){bv.classList.toggle('rec',ouvindo&&vozAlvo==='ditado');bv.innerHTML=(ouvindo&&vozAlvo==='ditado')?'<i class="ti ti-player-stop"></i> Parar (ou diga "finalizar")':'<i class="ti ti-microphone"></i> Ditar achados';}
   if(bc){bc.classList.toggle('rec',ouvindo&&vozAlvo==='comando');bc.innerHTML=(ouvindo&&vozAlvo==='comando')?'<i class="ti ti-player-stop"></i> Parar':'<i class="ti ti-microphone"></i> Falar';}
-  if(bi){bi.classList.toggle('rec',ouvindo&&vozAlvo==='ident');bi.innerHTML=(ouvindo&&vozAlvo==='ident')?'<i class="ti ti-player-stop"></i> Parar':'<i class="ti ti-microphone"></i> Ditar dados';}}
+  if(bi){bi.classList.toggle('rec',ouvindo&&vozAlvo==='ident');bi.innerHTML=(ouvindo&&vozAlvo==='ident')?'<i class="ti ti-player-stop"></i> Parar':'<i class="ti ti-microphone"></i> Ditar identificação';}}
 // status das integrações + estruturação por IA + assinatura VIDaaS
 async function carregarIntegracoes(){
   try{const r=await fetch(API+'/integracoes/status');if(r.ok)INTEG=await r.json();}catch(_){}
@@ -1070,11 +1073,28 @@ function setUsuario(u){USUARIO=u||{};
 function logout(){localStorage.removeItem('delfos_token');localStorage.removeItem('delfos_nome');location.replace('login.html');}
 function novaClinica(){go('clinicas');setTimeout(()=>{const e=document.getElementById('novaClin');if(e){e.focus();e.scrollIntoView({block:'center'});}},120);}
 function abrirPerfil(){
-  document.getElementById('perfilNome').textContent=USUARIO.nome||'—';
+  document.getElementById('perfilNome').value=USUARIO.nome||'';
   document.getElementById('perfilEmail').textContent=USUARIO.email||'—';
-  document.getElementById('perfilCrm').textContent=USUARIO.crm||'—';
+  document.getElementById('perfilCrm').value=USUARIO.crm||'';
   document.getElementById('pf_msg').textContent='';
+  const pm=document.getElementById('pf_perfil_msg'); if(pm)pm.textContent='';
   document.getElementById('perfilModal').style.display='flex';
+}
+async function salvarPerfil(){
+  const nome=val('perfilNome').trim(), crm=val('perfilCrm').trim(), msg=document.getElementById('pf_perfil_msg');
+  if(!nome){msg.style.color='var(--err)';msg.textContent='Informe o nome.';return;}
+  msg.style.color='var(--mut)';msg.textContent='Salvando…';
+  try{
+    const r=await fetch(API+'/auth/perfil',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('delfos_token')},body:JSON.stringify({nome,crm})});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok){USUARIO.nome=nome;USUARIO.crm=crm;
+      document.getElementById('userName').textContent=nome;
+      document.getElementById('userAv').textContent=((nome.trim()[0])||'M').toUpperCase();
+      const med=document.getElementById('medico'); if(med){med.value=nome+(crm?' — '+(crm.indexOf('CRM')===0?crm:'CRM '+crm):'');}
+      localStorage.setItem('delfos_nome',nome);
+      msg.style.color='var(--ok)';msg.textContent='✓ Perfil salvo.';}
+    else{msg.style.color='var(--err)';msg.textContent=j.detail||'Falha ao salvar o perfil.';}
+  }catch(_){msg.style.color='var(--err)';msg.textContent='Sem conexão com o servidor.';}
 }
 function fecharPerfil(){document.getElementById('perfilModal').style.display='none';}
 async function alterarSenha(){
